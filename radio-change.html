@@ -30,80 +30,85 @@
   #stage{
     position:relative;width:min(1180px,100%);min-height:100vh;background:var(--paper);
     padding:clamp(18px,3.5vw,44px) clamp(18px,4vw,56px) clamp(14px,2vw,28px);
-    filter:saturate(0) contrast(.78) brightness(1.05);
-    transition:filter .22s ease;
-    display:flex;flex-direction:column;gap:clamp(12px,2vh,22px);
+    display:flex;flex-direction:column;gap:clamp(13px,2.4vh,24px);
   }
-  body.on #stage{filter:none}
 
   /* photocopy grain */
   #grain{
     position:fixed;inset:-20%;z-index:9999;pointer-events:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E");
-    opacity:.26;mix-blend-mode:multiply;animation-play-state:paused;
+    opacity:.18;mix-blend-mode:multiply;animation-play-state:paused;
   }
-  body.on #grain{opacity:.15;animation:grain .5s steps(2) infinite running}
+  body.on #grain{opacity:.11;animation:grain .5s steps(2) infinite running}
   @keyframes grain{
     0%{transform:translate(0,0)}25%{transform:translate(-7px,5px)}
     50%{transform:translate(6px,-6px)}75%{transform:translate(-4px,-3px)}
   }
 
   /* ============ header ============ */
-  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
   #wm{
-    font-family:var(--f-cond);text-transform:uppercase;line-height:.92;
-    font-size:clamp(46px,8.2vw,116px);letter-spacing:-.01em;display:flex;flex-wrap:wrap;
+    font-family:var(--f-cond);text-transform:uppercase;line-height:.85;
+    font-size:clamp(56px,8.6vw,128px);letter-spacing:.005em;display:flex;flex-wrap:wrap;
   }
-  #wm .gap{width:.35em}
+  #wm .gap{flex-basis:100%;height:.05em}
   #wm span{
-    display:inline-block;padding:.02em .06em;margin-right:.04em;
-    transform:rotate(var(--r)) translateY(calc(var(--e,0)*-10px*var(--f)))
-              scale(calc(1 + var(--e,0)*.07*var(--f)));
+    display:inline-block;padding:.01em .03em;margin-right:.02em;
+    transform:rotate(var(--r)) translateY(calc(var(--e,0)*-9px*var(--f)))
+              scale(calc(1 + var(--e,0)*.06*var(--f)));
   }
-  /* ransom letter styles */
-  #wm .s0{background:var(--acid);color:var(--ink);font-family:var(--f-cond)}
-  #wm .s1{background:var(--ink);color:var(--paper);font-family:var(--f-sans)}
-  #wm .s2{border:4px solid var(--ink);color:var(--ink);font-family:var(--f-cond)}
-  #wm .s3{color:var(--red);font-family:var(--f-script);font-size:1.18em;line-height:.8}
-  #wm .s4{background:var(--red);color:var(--paper);font-family:var(--f-sans)}
-  #wm .s5{border:4px solid var(--red);color:var(--red);font-family:var(--f-type);font-weight:700}
-  #wm .s6{background:var(--ink);color:var(--acid);font-family:var(--f-cond)}
+  #wm .s0{background:var(--ink);color:var(--paper)}
+  #wm .s1{color:var(--ink)}
+  #wm .s2{background:var(--acid);color:var(--ink)}
+  #wm .s3{background:var(--red);color:var(--paper)}
+  #wm .s4{color:var(--paper);-webkit-text-stroke:.042em var(--ink)}
+  body:not(.on) #wm .s2,body:not(.on) #wm .s3{background:var(--scrap)}
 
   .stamp{
-    flex:none;font-family:var(--f-cond);letter-spacing:3px;font-size:clamp(13px,1.6vw,19px);
-    border:3px solid var(--red);color:var(--red);padding:6px 13px;transform:rotate(4deg);
-    text-transform:uppercase;user-select:none;
+    flex:none;font-family:var(--f-cond);letter-spacing:3px;font-size:clamp(14px,1.6vw,19px);
+    border:3px solid var(--ink);color:var(--ink);padding:6px 14px;background:transparent;
+    rotate:3deg;text-transform:uppercase;user-select:none;
   }
   body.on .stamp{
-    background:var(--red);color:var(--paper);animation:stampIn .18s steps(3);
+    background:var(--red);border-color:var(--red);color:var(--paper);
+    animation:stampIn .18s steps(3);
   }
-  @keyframes stampIn{from{transform:rotate(4deg) scale(2.1)}to{transform:rotate(4deg) scale(1)}}
+  @keyframes stampIn{from{scale:2}to{scale:1}}
 
-  .strap{display:flex;gap:12px;align-items:center;font-size:11px;font-weight:800;
-         letter-spacing:4px;text-transform:uppercase;flex-wrap:wrap}
-  .strap i{font-style:normal;background:var(--ink);color:var(--paper);padding:3px 9px}
-  .strap span{opacity:.65}
+  .strap{display:flex;gap:12px;align-items:center;font-family:var(--f-cond);
+         font-size:14px;letter-spacing:4px;text-transform:uppercase;flex-wrap:wrap}
+  .strap i{font-style:normal;background:var(--ink);color:var(--paper);padding:3px 10px}
+  .strap span{opacity:.78}
 
   /* ============ deck: scope + play + ticker ============ */
-  .deck{position:relative;border:3px solid var(--ink);background:
-        repeating-linear-gradient(46deg,var(--scrap) 0 1px,transparent 1px 7px),var(--paper)}
+  .deck{position:relative;border:3px solid var(--ink);background:var(--paper);
+        box-shadow:10px 11px 0 rgba(16,15,13,.13)}
+  .deck::before,.deck::after{
+    content:"+";position:absolute;top:-25px;z-index:6;pointer-events:none;
+    font-family:var(--f-type);font-weight:700;font-size:15px;line-height:1;color:var(--ink)}
+  .deck::before{left:-21px}
+  .deck::after{right:-21px}
   #scope{display:block;width:100%;height:clamp(130px,24vh,220px)}
 
   #play{
     position:absolute;left:50%;top:50%;translate:-50% -50%;cursor:pointer;
-    width:clamp(120px,17vw,168px);aspect-ratio:1;border-radius:50%;
-    background:radial-gradient(circle at 38% 32%,rgba(255,255,255,.28),transparent 42%),var(--red);
-    color:var(--paper);border:none;
-    box-shadow:0 0 0 5px var(--paper),0 0 0 8px var(--red);
-    font-family:var(--f-cond);font-size:clamp(30px,4.2vw,44px);letter-spacing:5px;text-indent:5px;
-    transform:rotate(-8deg);
-    text-shadow:0 0 6px rgba(236,230,214,.55),1px 1px 0 rgba(236,230,214,.35);
-    transition:transform .12s;
+    width:clamp(120px,16vw,164px);aspect-ratio:1;border-radius:50%;
+    background:var(--red);color:var(--paper);border:none;
+    box-shadow:7px 8px 0 rgba(16,15,13,.85);
+    font-family:var(--f-cond);font-size:clamp(30px,4vw,42px);letter-spacing:5px;text-indent:5px;
+    transform:rotate(-7deg);transition:transform .12s,box-shadow .12s;
   }
-  #play:hover{transform:rotate(-8deg) scale(1.04);
-    box-shadow:0 0 0 5px var(--paper),0 0 0 8px var(--red),7px 8px 0 rgba(255,45,22,.30)}
-  #play:active{transform:rotate(-8deg) scale(.96)}
-  body.on #play{background:var(--ink);box-shadow:0 0 0 5px var(--paper),0 0 0 8px var(--ink)}
+  #play:hover{transform:rotate(-7deg) scale(1.02);
+    box-shadow:11px 12px 0 rgba(16,15,13,.85)}
+  #play:active{transform:rotate(-7deg) scale(.97);
+    box-shadow:4px 4px 0 rgba(16,15,13,.85)}
+  body:not(.on) #play{
+    background:var(--paper);color:var(--ink);
+    box-shadow:0 0 0 4px var(--ink),7px 8px 0 rgba(16,15,13,.28);
+  }
+  body:not(.on) #play:hover{
+    box-shadow:0 0 0 4px var(--ink),11px 12px 0 rgba(16,15,13,.35);
+  }
 
   #hint{
     position:absolute;right:12px;top:10px;z-index:5;
@@ -150,30 +155,33 @@
   .vol label b{color:var(--red)}
 
   .track{
-    position:relative;width:44px;height:clamp(140px,24vh,210px);
-    background:var(--paper);border:3px solid var(--ink);border-radius:22px;
-    cursor:ns-resize;touch-action:none;
-    background-image:repeating-linear-gradient(180deg,
-      transparent 0 calc(10% - 1px),rgba(16,15,13,.35) calc(10% - 1px) 10%);
+    position:relative;width:36px;height:clamp(140px,22vh,200px);
+    border-radius:6px;cursor:ns-resize;touch-action:none;
+    background:
+      linear-gradient(90deg,rgba(16,15,13,.20),rgba(16,15,13,0) 42%,rgba(16,15,13,.20)),
+      var(--paper);
+    box-shadow:inset 0 0 0 2px var(--ink);
   }
   .thumb{
-    position:absolute;left:50%;bottom:calc(var(--v,0.75)*(100% - 30px));
-    translate:-50%;width:52px;height:26px;background:var(--scrap);
-    border:3px solid var(--ink);pointer-events:none;
+    position:absolute;left:50%;bottom:calc(var(--v,0.75)*(100% - 24px));
+    translate:-50%;width:46px;height:20px;background:var(--ink);border-radius:3px;
+    pointer-events:none;
     transition:bottom .16s cubic-bezier(.25,.9,.3,1);
+    box-shadow:0 3px 0 rgba(16,15,13,.30);
   }
   .track.dragging .thumb{transition:none}
   .thumb::after{
-    content:"";position:absolute;left:6px;right:6px;top:50%;height:3px;translate:0 -50%;
-    background:repeating-linear-gradient(90deg,var(--ink) 0 3px,transparent 3px 6px);
+    content:"";position:absolute;left:7px;right:7px;top:50%;height:3px;translate:0 -50%;
+    background:var(--paper);
   }
   body.on .volFader .thumb{background:var(--acid)}
+  body.on .volFader .thumb::after{background:var(--ink)}
 
   .eq{display:flex;flex-direction:column;gap:10px;min-width:0}
   .presets{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .presets button{
-    font-family:var(--f-type);font-weight:700;font-size:11px;letter-spacing:2px;
-    background:transparent;border:2px solid var(--ink);padding:4px 10px;cursor:pointer;
+    font-family:var(--f-cond);font-size:13px;letter-spacing:2px;
+    background:transparent;border:2px solid var(--ink);padding:5px 12px;cursor:pointer;
     text-transform:uppercase;
   }
   .presets button.act{background:var(--ink);color:var(--acid)}
@@ -182,8 +190,8 @@
     overflow-x:auto;padding-bottom:4px;
   }
   .band{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:34px}
-  .band .track{width:100%;max-width:40px;height:clamp(110px,20vh,170px);border-radius:12px;cursor:ns-resize}
-  .band .thumb{width:40px;height:22px}
+  .band .track{width:100%;max-width:34px;height:clamp(110px,18vh,160px)}
+  .band .thumb{width:40px;height:17px}
   .band label{font-family:var(--f-type);font-weight:700;font-size:10px;letter-spacing:1px;opacity:.7}
 
   /* ============ just played ============ */
@@ -308,9 +316,9 @@ addEventListener("unhandledrejection",e=>showErr("ASYNC ERROR — "+((e.reason&&
 
 /* ================= wordmark ================= */
 const WM=[
-  ["R",0,-4],["A",1, 2],["D",2,-1],["I",3, 3],["O",4,-2],
+  ["R",1,-2],["A",2, 2],["D",1,-1],["I",1, 1],["O",4,-2],
   null,
-  ["C",6, 2],["H",1,-3],["A",5, 2],["N",3,-2],["G",0, 1.5],["E",4,-2],
+  ["C",1, 1],["H",0,-2],["A",1, 2],["N",1,-1],["G",3, 2],["E",1,-1],
 ];
 WM.forEach(item=>{
   const sp=document.createElement("span");
