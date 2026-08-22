@@ -246,12 +246,20 @@ const STATS_BASE = "https://s26.myradiostream.com:22656/";
 
 /* ---------------- state ---------------- */
 let ctx=null, analyser=null, master=null, srcNode=null, audioEl=null;
+/* settings survive reloads */
 const NBANDS=10;
 const FREQS=[31,62,125,250,500,1000,2000,4000,8000,16000];
 const LABELS=["31","62","125","250","500","1K","2K","4K","8K","16K"];
-let filters=[];                 // peaking biquads
+let store={};
+try{store=JSON.parse(localStorage.getItem("radiochange")||"{}")||{};}catch(e){}
 let eqVals=new Array(NBANDS).fill(0);   // dB
-let vol=0.8;                    // 0..1
+if(Array.isArray(store.eq))for(let i=0;i<NBANDS;i++)
+  eqVals[i]=(typeof store.eq[i]==="number"&&isFinite(store.eq[i]))?store.eq[i]:0;
+let vol=(typeof store.vol==="number"&&store.vol>=0&&store.vol<=1)?store.vol:0.8;   // 0..1
+function saveSettings(){
+  try{localStorage.setItem("radiochange",JSON.stringify({vol:vol,eq:eqVals}));}catch(e){} 
+}
+let filters=[];                 // peaking biquads
 let playing=false;
 let timeBuf=null, freqBuf=null;
 let bassLvl=0;
@@ -310,7 +318,8 @@ function makeFader(track,onInput,onDbl){
 
 /* volume fader */
 const volFader=makeFader($("#volTrack"),
-  v=>{vol=v;$("#volVal").textContent=Math.round(v*100);
+  v=>{vol=v;saveSettings();
+      $("#volVal").textContent=Math.round(v*100);
       $("#volBubble").textContent=Math.round(v*100)+"%";
       if(master)master.gain.setTargetAtTime(v*v,ctx.currentTime,.03);});
 volFader.set(vol,false);
@@ -334,6 +343,7 @@ for(let i=0;i<NBANDS;i++){
 }
 function applyBand(i,dB){
   eqVals[i]=dB;
+  saveSettings();
   if(filters[i])filters[i].gain.setTargetAtTime(dB,ctx.currentTime,.03);
 }
 function refreshBands(){
@@ -350,7 +360,7 @@ const PRESETS={
 Object.entries(PRESETS).forEach(([name,gains])=>{
   const btn=document.createElement("button");btn.textContent=name;
   btn.onclick=()=>{
-    eqVals=[...gains];
+    eqVals=[...gains];saveSettings();
     /* sweep the faders down one after another, like a real desk */
     bandEls.forEach((b,i)=>setTimeout(()=>b.fader.set((eqVals[i]/12+1)/2,false),i*26));
     document.querySelectorAll(".presets button").forEach(x=>x.classList.remove("act"));
@@ -359,6 +369,12 @@ Object.entries(PRESETS).forEach(([name,gains])=>{
   $("#presets").append(btn);
   if(name==="FLAT")btn.classList.add("act");
 });
+/* re-arm the preset button matching whatever was restored from storage */
+{
+  const hit=Object.entries(PRESETS).find(([n,g])=>g.every((v,i)=>Math.abs(v-eqVals[i])<0.5));
+  if(hit)document.querySelectorAll(".presets button").forEach(x=>
+    x.classList.toggle("act",x.textContent===hit[0]));
+}
 function markCustom(){
   document.querySelectorAll(".presets button").forEach(x=>x.classList.remove("act"));
 }
