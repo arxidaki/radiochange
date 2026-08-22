@@ -513,6 +513,7 @@ async function start(){
         connectTO=setTimeout(()=>{
           if(!playing)showErr("STILL CONNECTING — SERVER REACHABLE BUT NO AUDIO YET");
         },9000);
+        $("#play").textContent="\u2026";            /* dialing... */
         try{await audioEl.play();}
         catch(e){clearTimeout(connectTO);stop();
           showErr("COULD NOT START — "+e.name+": "+e.message);return;}
@@ -528,6 +529,7 @@ async function start(){
     }else{
       await ctx.resume();
       if(audioEl){
+        $("#play").textContent="\u2026";
         try{await audioEl.play();}
         catch(e){showErr("RESUME FAILED — "+e.message);return;}
       }
