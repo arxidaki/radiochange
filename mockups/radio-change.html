@@ -140,7 +140,9 @@
     position:absolute;left:50%;bottom:calc(var(--v,0.75)*(100% - 30px));
     translate:-50%;width:52px;height:26px;background:var(--scrap);
     border:3px solid var(--ink);pointer-events:none;
+    transition:bottom .16s cubic-bezier(.25,.9,.3,1);
   }
+  .track.dragging .thumb{transition:none}
   .thumb::after{
     content:"";position:absolute;left:6px;right:6px;top:50%;height:3px;translate:0 -50%;
     background:repeating-linear-gradient(90deg,var(--ink) 0 3px,transparent 3px 6px);
@@ -283,9 +285,11 @@ function makeFader(track,onInput,onDbl){
   };
   track.addEventListener("pointerdown",e=>{
     track.setPointerCapture(e.pointerId);fromEvent(e);
+    track.classList.add("dragging");
     const mv=ev=>fromEvent(ev);
     const up=()=>{track.removeEventListener("pointermove",mv);
-                  track.removeEventListener("pointerup",up);};
+                  track.removeEventListener("pointerup",up);
+                  track.classList.remove("dragging");};
     track.addEventListener("pointermove",mv);
     track.addEventListener("pointerup",up);
   });
@@ -330,7 +334,9 @@ const PRESETS={
 Object.entries(PRESETS).forEach(([name,gains])=>{
   const btn=document.createElement("button");btn.textContent=name;
   btn.onclick=()=>{
-    eqVals=[...gains];refreshBands();
+    eqVals=[...gains];
+    /* sweep the faders down one after another, like a real desk */
+    bandEls.forEach((b,i)=>setTimeout(()=>b.fader.set((eqVals[i]/12+1)/2,false),i*26));
     document.querySelectorAll(".presets button").forEach(x=>x.classList.remove("act"));
     btn.classList.add("act");
   };
