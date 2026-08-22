@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radio Change — Player</title>
+<style>
+  :root{
+    --paper:#f2ede0;
+    --pink:#ff3d94;
+    --blue:#1f4fd8;
+    --yellow:#ffd200;
+    --ink:#151311;
+    --display:Haettenschweiler,"Arial Narrow",Impact,"Franklin Gothic Bold",sans-serif;
+    --ui:"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:#ddd7c8;color:var(--ink);font-family:var(--ui);
+    display:grid;place-items:center;overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* photocopy tooth over the whole app */
+  body::after{
+    content:"";position:fixed;inset:-15%;z-index:60;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.68' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E");
+    opacity:.3;mix-blend-mode:multiply;animation:tooth 1.3s steps(2) infinite;
+  }
+  @keyframes tooth{50%{transform:translate(7px,-5px)}}
+
+  .app{
+    position:relative;background:var(--paper);
+    width:min(430px,100%);height:min(880px,100%);
+    display:flex;flex-direction:column;
+    box-shadow:0 20px 50px -14px rgba(0,0,0,.45);
+    overflow:hidden;
+  }
+
+  /* ---------- app bar ---------- */
+  .bar{
+    display:flex;align-items:center;gap:10px;flex:none;
+    padding:14px 16px 12px;border-bottom:3px solid var(--ink);
+  }
+  .logo{
+    position:relative;font-family:var(--display);text-transform:uppercase;
+    font-size:22px;letter-spacing:-.01em;color:var(--blue);mix-blend-mode:multiply;
+  }
+  .logo::before{
+    content:"Radio Change";position:absolute;left:0;top:0;color:var(--pink);
+    mix-blend-mode:multiply;transform:translate(2px,2px);
+    animation:reg 6.5s ease-in-out infinite;
+  }
+  @keyframes reg{50%{transform:translate(1px,3px)}}
+  .live{
+    margin-left:auto;display:flex;align-items:center;gap:6px;
+    font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+  }
+  .live i{width:8px;height:8px;border-radius:50%;background:#b7b0a0;transition:.3s}
+  body.on .live i{background:var(--pink);animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.3}}
+
+  /* ---------- art tile ---------- */
+  .art{
+    position:relative;flex:none;margin:16px;aspect-ratio:1;overflow:hidden;
+    border:3px solid var(--ink);
+  }
+  .tone{position:absolute;inset:-12%;mix-blend-mode:multiply;pointer-events:none}
+  .t1{
+    background-image:radial-gradient(circle,var(--pink) 40%,transparent 43%);
+    background-size:7px 7px;
+    -webkit-mask-image:radial-gradient(60% 68% at 40% 44%,#000 6%,transparent 74%);
+            mask-image:radial-gradient(60% 68% at 40% 44%,#000 6%,transparent 74%);
+    animation:sway 11s ease-in-out infinite;
+  }
+  .t2{
+    background-image:radial-gradient(circle,var(--blue) 35%,transparent 38%);
+    background-size:7px 7px;background-position:3.5px 3.5px;
+    -webkit-mask-image:radial-gradient(52% 60% at 62% 58%,#000 2%,transparent 72%);
+            mask-image:radial-gradient(52% 60% at 62% 58%,#000 2%,transparent 72%);
+    animation:sway 13s ease-in-out infinite reverse;
+  }
+  .t3{
+    background:var(--yellow);opacity:.85;
+    -webkit-mask-image:radial-gradient(46% 50% at 50% 38%,#000 0%,transparent 78%);
+            mask-image:radial-gradient(46% 50% at 50% 38%,#000 0%,transparent 78%);
+  }
+  @keyframes sway{50%{transform:translate(-6px,5px)}}
+  body.on .t1{animation-duration:5s}
+  body.on .t2{animation-duration:6s}
+  .badge{
+    position:absolute;left:-4px;top:14px;z-index:3;transform:rotate(-3deg);
+    background:var(--ink);color:var(--paper);padding:4px 10px;
+    font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+  }
+
+  /* ---------- now playing ---------- */
+  .meta{flex:none;padding:0 16px}
+  .kick{font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue)}
+  .title{
+    font-family:var(--display);text-transform:uppercase;font-size:34px;line-height:.86;
+    margin-top:5px;mix-blend-mode:multiply;
+  }
+  .artist{
+    font-family:var(--display);text-transform:uppercase;font-size:20px;line-height:1;
+    color:var(--pink);mix-blend-mode:multiply;margin-top:3px;
+  }
+
+  /* ---------- the one action ---------- */
+  .controls{
+    flex:none;display:flex;align-items:center;gap:14px;padding:16px;
+  }
+  .play{
+    -webkit-appearance:none;appearance:none;border:3px solid var(--ink);cursor:pointer;padding:0;
+    width:104px;height:104px;border-radius:50%;flex:none;
+    background:var(--pink);color:var(--paper);
+    display:grid;place-items:center;
+    box-shadow:5px 5px 0 var(--ink);
+    transition:transform .1s, box-shadow .1s, background .2s;
+  }
+  .play:hover{background:var(--blue)}
+  .play:active{transform:translate(4px,4px);box-shadow:1px 1px 0 var(--ink)}
+  body.on .play{background:var(--blue)}
+  .play svg{width:40px;fill:currentColor}
+  .play .bars{display:none}
+  body.on .play .tri{display:none}
+  body.on .play .bars{display:block}
+
+  .vol{flex:1;min-width:0}
+  .vol .k{font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#6f6858}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;background:none;
+    height:26px;margin-top:6px;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track{height:8px;background:var(--ink)}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:20px;height:24px;background:var(--yellow);
+    border:3px solid var(--ink);margin-top:-8px;
+  }
+  input[type=range]::-moz-range-track{height:8px;background:var(--ink)}
+  input[type=range]::-moz-range-thumb{
+    width:16px;height:20px;border-radius:0;background:var(--yellow);border:3px solid var(--ink);
+  }
+
+  /* ---------- just played list ---------- */
+  .recent{flex:1;min-height:0;overflow:auto;padding:0 16px 8px;border-top:3px solid var(--ink)}
+  .recent h2{
+    position:sticky;top:0;background:var(--paper);z-index:2;
+    padding:12px 0 8px;font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+  }
+  .row{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid #d2cbb9}
+  .thumb{
+    width:42px;height:42px;flex:none;border:2px solid var(--ink);position:relative;overflow:hidden;
+  }
+  .thumb i{
+    position:absolute;inset:-20%;mix-blend-mode:multiply;
+    background-size:5px 5px;
+  }
+  .thumb .a{background-image:radial-gradient(circle,var(--pink) 40%,transparent 43%)}
+  .thumb .b{background-image:radial-gradient(circle,var(--blue) 34%,transparent 37%);background-position:2.5px 2.5px}
+  .row .txt{min-width:0}
+  .row .n{
+    font-family:var(--display);text-transform:uppercase;font-size:16px;line-height:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .row .a2{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#6f6858;margin-top:3px}
+  .row .t{margin-left:auto;flex:none;font-size:10px;letter-spacing:1.4px;color:#8b8271}
+
+  /* ---------- tab bar ---------- */
+  .tabs{
+    flex:none;display:flex;border-top:3px solid var(--ink);
+  }
+  .tab{
+    flex:1;border:0;background:none;cursor:pointer;padding:12px 4px 14px;
+    font-family:var(--ui);font-size:9px;font-weight:800;letter-spacing:2.2px;
+    text-transform:uppercase;color:#8b8271;position:relative;
+  }
+  .tab + .tab{border-left:1px solid #d2cbb9}
+  .tab.sel{color:var(--ink)}
+  .tab.sel::after{
+    content:"";position:absolute;left:50%;bottom:7px;transform:translateX(-50%);
+    width:22px;height:4px;background:var(--pink);
+  }
+
+  @media (max-height:700px){ .art{aspect-ratio:1.5/1} .play{width:88px;height:88px} }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="bar">
+      <span class="logo">Radio Change</span>
+      <span class="live"><i></i><span id="liveTxt">Off Air</span></span>
+    </div>
+
+    <div class="art">
+      <div class="tone t3"></div><div class="tone t1"></div><div class="tone t2"></div>
+      <span class="badge">Live from the room</span>
+    </div>
+
+    <div class="meta">
+      <div class="kick">Now Playing</div>
+      <div class="title">Children of the Grave</div>
+      <div class="artist">Black Sabbath</div>
+    </div>
+
+    <div class="controls">
+      <button class="play" id="play" aria-label="Play Radio Change">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path class="tri" d="M6 3 L21 12 L6 21 Z"/>
+          <g class="bars"><rect x="5" y="3" width="5" height="18"/><rect x="14" y="3" width="5" height="18"/></g>
+        </svg>
+      </button>
+      <div class="vol">
+        <div class="k">Volume</div>
+        <input type="range" min="0" max="100" value="74" aria-label="Volume" />
+      </div>
+    </div>
+
+    <section class="recent">
+      <h2>Just played</h2>
+      <div class="row">
+        <div class="thumb"><i class="a"></i><i class="b"></i></div>
+        <div class="txt"><div class="n">Ace of Spades</div><div class="a2">Motörhead</div></div>
+        <div class="t">12m</div>
+      </div>
+      <div class="row">
+        <div class="thumb"><i class="a"></i><i class="b"></i></div>
+        <div class="txt"><div class="n">Search and Destroy</div><div class="a2">The Stooges</div></div>
+        <div class="t">17m</div>
+      </div>
+      <div class="row">
+        <div class="thumb"><i class="a"></i><i class="b"></i></div>
+        <div class="txt"><div class="n">No One Knows</div><div class="a2">Queens of the Stone Age</div></div>
+        <div class="t">23m</div>
+      </div>
+      <div class="row">
+        <div class="thumb"><i class="a"></i><i class="b"></i></div>
+        <div class="txt"><div class="n">Cherub Rock</div><div class="a2">Smashing Pumpkins</div></div>
+        <div class="t">28m</div>
+      </div>
+    </section>
+
+    <nav class="tabs">
+      <button class="tab sel">Live</button>
+      <button class="tab">Shows</button>
+      <button class="tab">Info</button>
+    </nav>
+  </div>
+
+<script>
+  const play = document.getElementById('play');
+  const liveTxt = document.getElementById('liveTxt');
+  play.addEventListener('click', () => {
+    const on = document.body.classList.toggle('on');
+    liveTxt.textContent = on ? 'On Air' : 'Off Air';
+  });
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('sel'));
+    t.classList.add('sel');
+  }));
+</script>
+</body>
+</html>

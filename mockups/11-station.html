@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radio Change — Station</title>
+<style>
+  :root{
+    --paper:#f2ede0;
+    --pink:#ff3d94;
+    --blue:#1f4fd8;
+    --yellow:#ffd200;
+    --ink:#151311;
+    --hair:#d2cbb9;
+    --display:Haettenschweiler,"Arial Narrow",Impact,"Franklin Gothic Bold",sans-serif;
+    --ui:"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--paper);color:var(--ink);font-family:var(--ui);
+    overflow:hidden;-webkit-font-smoothing:antialiased;
+  }
+  body::after{
+    content:"";position:fixed;inset:-15%;z-index:60;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.68' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E");
+    opacity:.28;mix-blend-mode:multiply;animation:tooth 1.3s steps(2) infinite;
+  }
+  @keyframes tooth{50%{transform:translate(7px,-5px)}}
+
+  .shell{
+    height:100%;display:grid;
+    grid-template-columns:clamp(62px,6vw,84px) 1fr clamp(240px,26vw,340px);
+    grid-template-rows:1fr auto;
+  }
+
+  /* ---------- left rail ---------- */
+  .rail{
+    grid-column:1;grid-row:1/-1;border-right:3px solid var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0;
+  }
+  .mark{
+    font-family:var(--display);font-size:clamp(13px,1.3vw,17px);text-transform:uppercase;
+    writing-mode:vertical-rl;color:var(--blue);mix-blend-mode:multiply;
+    letter-spacing:.06em;margin-bottom:14px;position:relative;
+  }
+  .mark::before{
+    content:"Radio Change";position:absolute;left:0;top:0;color:var(--pink);
+    mix-blend-mode:multiply;transform:translate(2px,2px);
+    animation:reg 6.5s ease-in-out infinite;
+  }
+  @keyframes reg{50%{transform:translate(1px,3px)}}
+  .nav{
+    -webkit-appearance:none;appearance:none;border:2px solid transparent;background:none;
+    cursor:pointer;width:clamp(40px,4vw,52px);aspect-ratio:1;
+    display:grid;place-items:center;font-size:9px;font-weight:800;letter-spacing:1.4px;
+    text-transform:uppercase;color:#8b8271;
+  }
+  .nav.sel{border-color:var(--ink);background:var(--yellow);color:var(--ink);
+    box-shadow:3px 3px 0 var(--ink)}
+
+  /* ---------- main ---------- */
+  .main{
+    grid-column:2;grid-row:1;
+    position:relative;padding:clamp(16px,2.4vw,32px);
+    display:grid;grid-template-rows:auto 1fr auto;gap:clamp(10px,1.6vw,18px);min-height:0;
+  }
+  .crumb{
+    display:flex;align-items:center;gap:12px;
+    font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+  }
+  .crumb i{width:8px;height:8px;border-radius:50%;background:#b7b0a0;flex:none;transition:.3s}
+  body.on .crumb i{background:var(--pink);animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.3}}
+  .crumb .r{margin-left:auto;color:#8b8271;letter-spacing:2px}
+
+  /* art + play */
+  .stage{
+    position:relative;min-height:0;border:3px solid var(--ink);overflow:hidden;
+    display:grid;place-items:center;
+  }
+  .tone{position:absolute;inset:-12%;mix-blend-mode:multiply;pointer-events:none}
+  .t1{
+    background-image:radial-gradient(circle,var(--pink) 40%,transparent 43%);
+    background-size:8px 8px;
+    -webkit-mask-image:radial-gradient(58% 66% at 38% 44%,#000 6%,transparent 74%);
+            mask-image:radial-gradient(58% 66% at 38% 44%,#000 6%,transparent 74%);
+    animation:sway 11s ease-in-out infinite;
+  }
+  .t2{
+    background-image:radial-gradient(circle,var(--blue) 35%,transparent 38%);
+    background-size:8px 8px;background-position:4px 4px;
+    -webkit-mask-image:radial-gradient(52% 60% at 64% 58%,#000 2%,transparent 72%);
+            mask-image:radial-gradient(52% 60% at 64% 58%,#000 2%,transparent 72%);
+    animation:sway 13s ease-in-out infinite reverse;
+  }
+  .t3{
+    background:var(--yellow);opacity:.85;
+    -webkit-mask-image:radial-gradient(44% 50% at 50% 38%,#000 0%,transparent 78%);
+            mask-image:radial-gradient(44% 50% at 50% 38%,#000 0%,transparent 78%);
+  }
+  @keyframes sway{50%{transform:translate(-6px,5px)}}
+  body.on .t1{animation-duration:5s}
+  body.on .t2{animation-duration:6s}
+
+  /* ---------- the one action ---------- */
+  .play{
+    position:relative;z-index:5;
+    -webkit-appearance:none;appearance:none;border:4px solid var(--ink);cursor:pointer;padding:0;
+    width:clamp(130px,17vw,208px);aspect-ratio:1;border-radius:50%;
+    background:var(--pink);color:var(--paper);display:grid;place-items:center;
+    box-shadow:7px 7px 0 var(--ink);
+    transition:transform .1s, box-shadow .1s, background .2s;
+  }
+  .play:hover{background:var(--blue)}
+  .play:active{transform:translate(6px,6px);box-shadow:1px 1px 0 var(--ink)}
+  body.on .play{background:var(--blue)}
+  .play svg{width:38%;fill:currentColor}
+  .play .bars{display:none}
+  body.on .play .tri{display:none}
+  body.on .play .bars{display:block}
+
+  .np{display:flex;align-items:flex-end;gap:clamp(10px,1.6vw,20px);min-width:0}
+  .np .txt{min-width:0}
+  .np .k{font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue)}
+  .np .title{
+    font-family:var(--display);text-transform:uppercase;
+    font-size:clamp(26px,4vw,52px);line-height:.86;margin-top:4px;mix-blend-mode:multiply;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .np .artist{
+    font-family:var(--display);text-transform:uppercase;font-size:clamp(15px,2vw,26px);
+    line-height:1;color:var(--pink);mix-blend-mode:multiply;margin-top:2px;
+  }
+  .eq{display:flex;gap:4px;align-items:flex-end;height:26px;margin-left:auto;flex:none}
+  .eq i{width:6px;background:var(--pink);height:20%;mix-blend-mode:multiply}
+  body.on .eq i{animation:bump .62s ease-in-out infinite alternate}
+  .eq i:nth-child(2){animation-delay:.1s}.eq i:nth-child(3){animation-delay:.22s}
+  .eq i:nth-child(4){animation-delay:.05s}.eq i:nth-child(5){animation-delay:.3s}
+  @keyframes bump{to{height:100%}}
+
+  /* ---------- right column ---------- */
+  .side{
+    grid-column:3;grid-row:1;border-left:3px solid var(--ink);
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .side h2{
+    padding:14px 16px 10px;font-size:9px;font-weight:800;letter-spacing:2.5px;
+    text-transform:uppercase;border-bottom:2px solid var(--ink);flex:none;
+  }
+  .list{overflow:auto;padding:0 16px 12px;min-height:0}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--hair)}
+  .thumb{width:40px;height:40px;flex:none;border:2px solid var(--ink);position:relative;overflow:hidden}
+  .thumb i{position:absolute;inset:-20%;mix-blend-mode:multiply;background-size:5px 5px}
+  .thumb .a{background-image:radial-gradient(circle,var(--pink) 40%,transparent 43%)}
+  .thumb .b{background-image:radial-gradient(circle,var(--blue) 34%,transparent 37%);background-position:2.5px 2.5px}
+  .row .txt{min-width:0}
+  .row .n{
+    font-family:var(--display);text-transform:uppercase;font-size:15px;line-height:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .row .a2{font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#6f6858;margin-top:3px}
+  .row .t{margin-left:auto;flex:none;font-size:9px;letter-spacing:1.4px;color:#8b8271}
+
+  /* ---------- player bar ---------- */
+  .barbottom{
+    grid-column:2/-1;grid-row:2;border-top:3px solid var(--ink);
+    display:flex;align-items:center;gap:clamp(12px,2vw,26px);
+    padding:clamp(9px,1.2vw,14px) clamp(16px,2.4vw,32px);
+  }
+  .barbottom .st{
+    font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;flex:none;
+  }
+  .vol{display:flex;align-items:center;gap:10px;min-width:0;flex:1;max-width:280px}
+  .vol .k{font-size:9px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase;color:#6f6858;flex:none}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;background:none;height:24px;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track{height:7px;background:var(--ink)}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:22px;background:var(--yellow);
+    border:3px solid var(--ink);margin-top:-8px;
+  }
+  input[type=range]::-moz-range-track{height:7px;background:var(--ink)}
+  input[type=range]::-moz-range-thumb{
+    width:14px;height:18px;border-radius:0;background:var(--yellow);border:3px solid var(--ink);
+  }
+  .stamp{
+    margin-left:auto;flex:none;transform:rotate(-4deg);
+    border:2px solid var(--pink);color:var(--pink);padding:5px 11px;
+    font-family:var(--display);font-size:15px;letter-spacing:.04em;text-transform:uppercase;
+    mix-blend-mode:multiply;
+  }
+
+  @media (max-width:900px){
+    .shell{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+    .rail{grid-column:1;grid-row:1;flex-direction:row;border-right:0;border-bottom:3px solid var(--ink);padding:10px 14px}
+    .mark{writing-mode:horizontal-tb;margin:0 14px 0 0}
+    .main{grid-column:1;grid-row:2}
+    .side{display:none}
+    .barbottom{grid-column:1;grid-row:3}
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="rail">
+      <span class="mark">Radio Change</span>
+      <button class="nav sel">Live</button>
+      <button class="nav">Shows</button>
+      <button class="nav">Info</button>
+    </nav>
+
+    <main class="main">
+      <div class="crumb">
+        <i></i><span id="state">Off Air</span><span>Rock</span>
+        <span class="r">Since 1 a.m.</span>
+      </div>
+
+      <div class="stage">
+        <div class="tone t3"></div><div class="tone t1"></div><div class="tone t2"></div>
+        <button class="play" id="play" aria-label="Play Radio Change">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path class="tri" d="M6 3 L21 12 L6 21 Z"/>
+            <g class="bars"><rect x="5" y="3" width="5" height="18"/><rect x="14" y="3" width="5" height="18"/></g>
+          </svg>
+        </button>
+      </div>
+
+      <div class="np">
+        <div class="txt">
+          <div class="k">Now Playing</div>
+          <div class="title">Children of the Grave</div>
+          <div class="artist">Black Sabbath</div>
+        </div>
+        <span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
+    </main>
+
+    <aside class="side">
+      <h2>Just played</h2>
+      <div class="list">
+        <div class="row">
+          <div class="thumb"><i class="a"></i><i class="b"></i></div>
+          <div class="txt"><div class="n">Ace of Spades</div><div class="a2">Motörhead</div></div>
+          <div class="t">12m</div>
+        </div>
+        <div class="row">
+          <div class="thumb"><i class="a"></i><i class="b"></i></div>
+          <div class="txt"><div class="n">Search and Destroy</div><div class="a2">The Stooges</div></div>
+          <div class="t">17m</div>
+        </div>
+        <div class="row">
+          <div class="thumb"><i class="a"></i><i class="b"></i></div>
+          <div class="txt"><div class="n">No One Knows</div><div class="a2">Queens of the Stone Age</div></div>
+          <div class="t">23m</div>
+        </div>
+        <div class="row">
+          <div class="thumb"><i class="a"></i><i class="b"></i></div>
+          <div class="txt"><div class="n">Cherub Rock</div><div class="a2">Smashing Pumpkins</div></div>
+          <div class="t">28m</div>
+        </div>
+        <div class="row">
+          <div class="thumb"><i class="a"></i><i class="b"></i></div>
+          <div class="txt"><div class="n">Debaser</div><div class="a2">Pixies</div></div>
+          <div class="t">34m</div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="barbottom">
+      <span class="st" id="state2">Off Air</span>
+      <div class="vol"><span class="k">Vol</span><input type="range" min="0" max="100" value="74" aria-label="Volume" /></div>
+      <span class="stamp">No ads · ever</span>
+    </div>
+  </div>
+
+<script>
+  const play = document.getElementById('play');
+  const s1 = document.getElementById('state');
+  const s2 = document.getElementById('state2');
+  play.addEventListener('click', () => {
+    const on = document.body.classList.toggle('on');
+    s1.textContent = s2.textContent = on ? 'On Air' : 'Off Air';
+  });
+  document.querySelectorAll('.nav').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.nav').forEach(x => x.classList.remove('sel'));
+    t.classList.add('sel');
+  }));
+</script>
+</body>
+</html>
