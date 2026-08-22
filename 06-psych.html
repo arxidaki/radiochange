@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radio Change — Psych</title>
+<style>
+  :root{
+    --deep:#2a0a4a;
+    --orange:#ff4d00;
+    --amber:#ffa600;
+    --teal:#00d6b4;
+    --magenta:#ff1f8f;
+    --lime:#c8ff00;
+    --cream:#fff2c9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--deep);color:var(--cream);
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    overflow:hidden;display:grid;place-items:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* rotating sunburst */
+  .burst{
+    position:fixed;left:50%;top:50%;width:190vmax;aspect-ratio:1;
+    transform:translate(-50%,-50%);z-index:0;
+    background:conic-gradient(
+      var(--orange) 0 7.5deg, var(--deep) 7.5deg 15deg,
+      var(--orange) 15deg 22.5deg, var(--deep) 22.5deg 30deg,
+      var(--orange) 30deg 37.5deg, var(--deep) 37.5deg 45deg,
+      var(--orange) 45deg 52.5deg, var(--deep) 52.5deg 60deg,
+      var(--orange) 60deg 67.5deg, var(--deep) 67.5deg 75deg,
+      var(--orange) 75deg 82.5deg, var(--deep) 82.5deg 90deg,
+      var(--orange) 90deg 97.5deg, var(--deep) 97.5deg 105deg,
+      var(--orange) 105deg 112.5deg, var(--deep) 112.5deg 120deg,
+      var(--orange) 120deg 127.5deg, var(--deep) 127.5deg 135deg,
+      var(--orange) 135deg 142.5deg, var(--deep) 142.5deg 150deg,
+      var(--orange) 150deg 157.5deg, var(--deep) 157.5deg 165deg,
+      var(--orange) 165deg 172.5deg, var(--deep) 172.5deg 180deg,
+      var(--orange) 180deg 187.5deg, var(--deep) 187.5deg 195deg,
+      var(--orange) 195deg 202.5deg, var(--deep) 202.5deg 210deg,
+      var(--orange) 210deg 217.5deg, var(--deep) 217.5deg 225deg,
+      var(--orange) 225deg 232.5deg, var(--deep) 232.5deg 240deg,
+      var(--orange) 240deg 247.5deg, var(--deep) 247.5deg 255deg,
+      var(--orange) 255deg 262.5deg, var(--deep) 262.5deg 270deg,
+      var(--orange) 270deg 277.5deg, var(--deep) 277.5deg 285deg,
+      var(--orange) 285deg 292.5deg, var(--deep) 292.5deg 300deg,
+      var(--orange) 300deg 307.5deg, var(--deep) 307.5deg 315deg,
+      var(--orange) 315deg 322.5deg, var(--deep) 322.5deg 330deg,
+      var(--orange) 330deg 337.5deg, var(--deep) 337.5deg 345deg,
+      var(--orange) 345deg 352.5deg, var(--deep) 352.5deg 360deg);
+    opacity:.55;
+    animation:turn 90s linear infinite;
+  }
+  body.on .burst{animation-duration:26s;opacity:.72}
+  @keyframes turn{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  /* halo softening the burst behind the poster */
+  .halo{
+    position:fixed;left:50%;top:50%;width:130vmin;aspect-ratio:1;z-index:1;
+    transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(42,10,74,.92) 34%,rgba(42,10,74,.5) 56%,transparent 74%);
+  }
+  /* print grain */
+  .grain{
+    position:fixed;inset:-10%;z-index:9;pointer-events:none;opacity:.3;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E");
+    animation:gr 1.2s steps(2) infinite;
+  }
+  @keyframes gr{50%{transform:translate(-6px,5px)}}
+
+  .poster{position:relative;z-index:4;width:min(660px,92vmin);aspect-ratio:1}
+  svg{width:100%;height:100%;display:block;overflow:visible}
+
+  .arc{
+    font-family:Haettenschweiler,"Arial Narrow",Impact,sans-serif;
+    text-transform:uppercase;letter-spacing:.04em;
+  }
+
+  /* ---------- the one action ---------- */
+  .play{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:38%;aspect-ratio:1;border-radius:50%;border:0;padding:0;cursor:pointer;
+    background:var(--magenta);color:var(--cream);
+    display:grid;place-items:center;
+    box-shadow:0 0 0 clamp(6px,1.4vmin,12px) var(--lime),
+               0 0 0 clamp(11px,2.4vmin,20px) var(--deep),
+               0 0 60px rgba(255,31,143,.55);
+    transition:transform .2s cubic-bezier(.2,.9,.3,1.4),box-shadow .3s;
+  }
+  .play:hover{transform:translate(-50%,-50%) scale(1.06)}
+  .play:active{transform:translate(-50%,-50%) scale(.93)}
+  body.on .play{
+    background:var(--teal);
+    box-shadow:0 0 0 clamp(6px,1.4vmin,12px) var(--amber),
+               0 0 0 clamp(11px,2.4vmin,20px) var(--deep),
+               0 0 80px rgba(0,214,180,.6);
+  }
+  .play .t{
+    font-family:Haettenschweiler,"Arial Narrow",Impact,sans-serif;
+    font-size:clamp(26px,6.6vmin,54px);line-height:.82;text-transform:uppercase;
+  }
+  .play .t small{display:block;font-size:.6em;font-family:inherit}
+
+  /* ---------- footer ---------- */
+  .foot{
+    position:absolute;left:50%;bottom:clamp(-6px,-1vmin,0px);transform:translate(-50%,100%);
+    z-index:5;text-align:center;width:100%;
+  }
+  .tag{
+    display:inline-block;background:var(--lime);color:var(--deep);
+    padding:5px 12px;font-size:clamp(8px,1.5vmin,11px);font-weight:800;letter-spacing:3px;
+  }
+  .track{
+    margin-top:8px;font-family:Haettenschweiler,"Arial Narrow",Impact,sans-serif;
+    font-size:clamp(15px,3.2vmin,28px);text-transform:uppercase;color:var(--amber);
+    letter-spacing:.02em;text-shadow:2px 2px 0 var(--magenta);
+  }
+
+  @media (max-width:640px){ .poster{width:94vw} }
+</style>
+</head>
+<body>
+  <div class="burst"></div>
+  <div class="halo"></div>
+
+  <div class="poster">
+    <svg viewBox="0 0 600 600" aria-hidden="true">
+      <defs>
+        <path id="arcTop" d="M 66 320 A 234 234 0 0 1 534 320"/>
+        <path id="arcBot" d="M 82 316 A 218 218 0 0 0 518 316"/>
+      </defs>
+      <!-- vibrating outer ring -->
+      <circle cx="300" cy="300" r="286" fill="none" stroke="#c8ff00" stroke-width="5"/>
+      <circle cx="300" cy="300" r="276" fill="none" stroke="#ff1f8f" stroke-width="3"/>
+
+      <text class="arc" font-size="94" fill="#ffa600" stroke="#ff1f8f" stroke-width="3">
+        <textPath href="#arcTop" startOffset="50%" text-anchor="middle">RADIO</textPath>
+      </text>
+      <text class="arc" font-size="94" fill="#00d6b4" stroke="#2a0a4a" stroke-width="3">
+        <textPath href="#arcBot" startOffset="50%" text-anchor="middle">CHANGE</textPath>
+      </text>
+    </svg>
+
+    <button class="play" id="play" aria-label="Play Radio Change">
+      <span class="t" id="playTxt">PLAY<small>▶</small></span>
+    </button>
+
+    <div class="foot">
+      <span class="tag">NOW PLAYING</span>
+      <div class="track" id="track">Jefferson Airplane — Somebody to Love</div>
+    </div>
+  </div>
+
+  <div class="grain"></div>
+
+<script>
+  const play = document.getElementById('play');
+  const txt = document.getElementById('playTxt');
+  play.addEventListener('click', () => {
+    const on = document.body.classList.toggle('on');
+    txt.innerHTML = on ? 'ON<small>AIR</small>' : 'PLAY<small>▶</small>';
+  });
+</script>
+</body>
+</html>

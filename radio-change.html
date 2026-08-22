@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radio Change</title>
+<style>
+  :root{
+    --paper:#ece6d6;
+    --scrap:#e0d6bd;
+    --ink:#100f0d;
+    --acid:#e4ff33;
+    --red:#ff2d16;
+    --f-cond:Haettenschweiler,"Arial Narrow",Impact,sans-serif;
+    --f-sans:"Arial Black","Helvetica Neue",Arial,sans-serif;
+    --f-serif:Georgia,"Times New Roman",serif;
+    --f-type:"Courier New",Courier,monospace;
+    --f-script:"Brush Script MT","Segoe Script",cursive;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    background:#a9a294;color:var(--ink);
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    display:grid;place-items:center;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ============ the photocopy sheet ============ */
+  #stage{
+    position:relative;width:min(1180px,100%);min-height:100vh;background:var(--paper);
+    padding:clamp(18px,3.5vw,44px) clamp(18px,4vw,56px) clamp(14px,2vw,28px);
+    filter:saturate(0) contrast(.78) brightness(1.05);
+    transition:filter .22s ease;
+    display:flex;flex-direction:column;gap:clamp(12px,2vh,22px);
+  }
+  body.on #stage{filter:none}
+
+  /* photocopy grain */
+  #grain{
+    position:fixed;inset:-20%;z-index:9999;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E");
+    opacity:.26;mix-blend-mode:multiply;animation-play-state:paused;
+  }
+  body.on #grain{opacity:.15;animation:grain .5s steps(2) infinite running}
+  @keyframes grain{
+    0%{transform:translate(0,0)}25%{transform:translate(-7px,5px)}
+    50%{transform:translate(6px,-6px)}75%{transform:translate(-4px,-3px)}
+  }
+
+  /* ============ header ============ */
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  #wm{
+    font-family:var(--f-cond);text-transform:uppercase;line-height:.92;
+    font-size:clamp(46px,8.2vw,116px);letter-spacing:-.01em;display:flex;flex-wrap:wrap;
+  }
+  #wm .gap{width:.35em}
+  #wm span{
+    display:inline-block;padding:.02em .06em;margin-right:.04em;
+    transform:rotate(var(--r)) translateY(calc(var(--e,0)*-10px*var(--f)))
+              scale(calc(1 + var(--e,0)*.07*var(--f)));
+  }
+  /* ransom letter styles */
+  #wm .s0{background:var(--acid);color:var(--ink);font-family:var(--f-cond)}
+  #wm .s1{background:var(--ink);color:var(--paper);font-family:var(--f-sans)}
+  #wm .s2{border:4px solid var(--ink);color:var(--ink);font-family:var(--f-cond)}
+  #wm .s3{color:var(--red);font-family:var(--f-script);font-size:1.18em;line-height:.8}
+  #wm .s4{background:var(--red);color:var(--paper);font-family:var(--f-sans)}
+  #wm .s5{border:4px solid var(--red);color:var(--red);font-family:var(--f-type);font-weight:700}
+  #wm .s6{background:var(--ink);color:var(--acid);font-family:var(--f-cond)}
+
+  .stamp{
+    flex:none;font-family:var(--f-cond);letter-spacing:3px;font-size:clamp(13px,1.6vw,19px);
+    border:3px solid var(--red);color:var(--red);padding:6px 13px;transform:rotate(4deg);
+    text-transform:uppercase;user-select:none;
+  }
+  body.on .stamp{
+    background:var(--red);color:var(--paper);animation:stampIn .18s steps(3);
+  }
+  @keyframes stampIn{from{transform:rotate(4deg) scale(2.1)}to{transform:rotate(4deg) scale(1)}}
+
+  .strap{display:flex;gap:12px;align-items:center;font-size:11px;font-weight:800;
+         letter-spacing:4px;text-transform:uppercase;flex-wrap:wrap}
+  .strap i{font-style:normal;background:var(--ink);color:var(--paper);padding:3px 9px}
+  .strap span{opacity:.65}
+
+  /* ============ deck: scope + play + ticker ============ */
+  .deck{position:relative;border:3px solid var(--ink);background:
+        repeating-linear-gradient(46deg,var(--scrap) 0 1px,transparent 1px 7px),var(--paper)}
+  #scope{display:block;width:100%;height:clamp(130px,24vh,220px)}
+
+  #play{
+    position:absolute;left:50%;top:50%;translate:-50% -50%;cursor:pointer;
+    width:clamp(120px,17vw,168px);aspect-ratio:1;border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,rgba(255,255,255,.28),transparent 42%),var(--red);
+    color:var(--paper);border:none;
+    box-shadow:0 0 0 5px var(--paper),0 0 0 8px var(--red);
+    font-family:var(--f-cond);font-size:clamp(30px,4.2vw,44px);letter-spacing:5px;text-indent:5px;
+    transform:rotate(-8deg);
+    text-shadow:0 0 6px rgba(236,230,214,.55),1px 1px 0 rgba(236,230,214,.35);
+    transition:transform .12s;
+  }
+  #play:hover{transform:rotate(-8deg) scale(1.04)}
+  #play:active{transform:rotate(-8deg) scale(.96)}
+  body.on #play{background:var(--ink);box-shadow:0 0 0 5px var(--paper),0 0 0 8px var(--ink)}
+
+  #demoTag{
+    position:absolute;left:12px;top:10px;background:var(--ink);color:var(--acid);
+    font-family:var(--f-type);font-weight:700;font-size:11px;letter-spacing:2px;padding:4px 9px;
+  }
+
+  .ticker{
+    border-top:3px solid var(--ink);background:var(--ink);color:var(--paper);
+    overflow:hidden;white-space:nowrap;
+  }
+  .ticker div{
+    display:inline-block;padding:7px 0;
+    font-family:var(--f-type);font-weight:700;font-size:13px;letter-spacing:2px;
+    animation:tick 18s linear infinite;
+  }
+  @keyframes tick{to{transform:translateX(-50%)}}
+
+  /* ============ console: volume + eq ============ */
+  .console{display:grid;grid-template-columns:auto 1fr;gap:clamp(14px,3vw,34px);align-items:stretch}
+
+  .vol{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .vol label,.eq>label{
+    font-family:var(--f-type);font-weight:700;font-size:11px;letter-spacing:3px;
+  }
+  .vol label b{color:var(--red)}
+
+  .track{
+    position:relative;width:44px;height:clamp(140px,24vh,210px);
+    background:var(--paper);border:3px solid var(--ink);border-radius:22px;
+    cursor:ns-resize;touch-action:none;
+    background-image:repeating-linear-gradient(180deg,
+      transparent 0 calc(10% - 1px),rgba(16,15,13,.35) calc(10% - 1px) 10%);
+  }
+  .thumb{
+    position:absolute;left:50%;bottom:calc(var(--v,0.75)*(100% - 30px));
+    translate:-50%;width:52px;height:26px;background:var(--scrap);
+    border:3px solid var(--ink);pointer-events:none;
+  }
+  .thumb::after{
+    content:"";position:absolute;left:6px;right:6px;top:50%;height:3px;translate:0 -50%;
+    background:repeating-linear-gradient(90deg,var(--ink) 0 3px,transparent 3px 6px);
+  }
+  body.on .volFader .thumb{background:var(--acid)}
+
+  .eq{display:flex;flex-direction:column;gap:10px;min-width:0}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .presets button{
+    font-family:var(--f-type);font-weight:700;font-size:11px;letter-spacing:2px;
+    background:transparent;border:2px solid var(--ink);padding:4px 10px;cursor:pointer;
+    text-transform:uppercase;
+  }
+  .presets button.act{background:var(--ink);color:var(--acid)}
+  .rack{
+    display:flex;gap:clamp(6px,1.4vw,18px);justify-content:space-between;flex:1;
+    overflow-x:auto;padding-bottom:4px;
+  }
+  .band{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:34px}
+  .band .track{width:100%;max-width:40px;height:clamp(110px,20vh,170px);border-radius:12px;cursor:ns-resize}
+  .band .thumb{width:40px;height:22px}
+  .band label{font-family:var(--f-type);font-weight:700;font-size:10px;letter-spacing:1px;opacity:.7}
+
+  footer.hints{
+    margin-top:auto;font-family:var(--f-type);font-size:10px;letter-spacing:2px;opacity:.45;
+    text-transform:uppercase;
+  }
+
+  .err{
+    position:fixed;left:50%;top:14px;translate:-50%;z-index:10001;display:none;
+    font-family:var(--f-type);font-weight:700;font-size:13px;max-width:80vw;
+    background:var(--red);color:var(--paper);padding:12px 18px;letter-spacing:1px;
+  }
+
+  @media (max-width:720px){
+    .console{grid-template-columns:1fr}
+    .vol{flex-direction:row;justify-content:center}
+    .vol .track{height:90px;width:36px}
+    .band .track{height:96px}
+    footer.hints{display:none}
+  }
+</style>
+</head>
+<body>
+
+<main id="stage">
+  <header class="top">
+    <h1 id="wm" aria-label="Radio Change"></h1>
+    <div class="stamp" id="air">OFF AIR</div>
+  </header>
+
+  <p class="strap"><i>NO ADS</i><span>NO PLAYLIST COMMITTEE</span><span>24 HOURS</span></p>
+
+  <section class="deck">
+    <canvas id="scope"></canvas>
+    <button id="play">PLAY</button>
+    <div id="demoTag" hidden>TEST SIGNAL</div>
+    <div class="ticker"><div id="tick"></div></div>
+  </section>
+
+  <section class="console">
+    <div class="vol">
+      <div class="fader volFader track" id="volTrack"><div class="thumb"></div></div>
+      <label>VOL&nbsp;<b id="volVal">80</b></label>
+    </div>
+    <div class="eq">
+      <div class="presets" id="presets"></div>
+      <div class="rack" id="rack"></div>
+      <label>EQUALIZER</label>
+    </div>
+  </section>
+
+  <footer class="hints">SPACE PLAY/STOP &middot; &uarr;&darr; VOLUME &middot; DOUBLE-CLICK A FADER TO ZERO IT</footer>
+</main>
+
+<div class="err" id="err"></div>
+<div id="grain"></div>
+
+<script type="module">
+/* =====================================================================
+   RADIO CHANGE — one page, two states.
+   Off air it is an under-inked photocopy. Pressing play floods it.
+   Point STREAM_URL at a CORS-enabled stream to go live; while it is
+   null a synthesized test signal runs through the exact same chain so
+   EQ + visuals are demonstrable.
+   ===================================================================== */
+
+const STREAM_URL = "https://s26.myradiostream.com:22656/stream";
+const STATS_BASE = "https://s26.myradiostream.com:22656/";
+
+/* ---------------- state ---------------- */
+let ctx=null, analyser=null, master=null, srcNode=null, audioEl=null;
+const NBANDS=10;
+const FREQS=[31,62,125,250,500,1000,2000,4000,8000,16000];
+const LABELS=["31","62","125","250","500","1K","2K","4K","8K","16K"];
+let filters=[];                 // peaking biquads
+let eqVals=new Array(NBANDS).fill(0);   // dB
+let vol=0.8;                    // 0..1
+let playing=false;
+let timeBuf=null, freqBuf=null;
+let bassLvl=0;
+
+/* faders built before ctx exists; values applied on init */
+const $=s=>document.querySelector(s);
+
+function showErr(msg){const e=$("#err");e.textContent=msg;e.style.display="block";
+  clearTimeout(showErr.t);showErr.t=setTimeout(()=>e.style.display="none",6000);}
+
+/* nothing fails silently while we're bringing this up */
+addEventListener("error",e=>showErr("SCRIPT ERROR — "+(e.message||"unknown")));
+addEventListener("unhandledrejection",e=>showErr("ASYNC ERROR — "+((e.reason&&e.reason.message)||e.reason)));
+
+/* ================= wordmark ================= */
+const WM=[
+  ["R",0,-4],["A",1, 2],["D",2,-1],["I",3, 3],["O",4,-2],
+  null,
+  ["C",6, 2],["H",1,-3],["A",5, 2],["N",3,-2],["G",0, 1.5],["E",4,-2],
+];
+WM.forEach(item=>{
+  const sp=document.createElement("span");
+  if(!item){sp.className="gap";$("#wm").appendChild(sp);return;}
+  const [ch,s,r]=item;
+  sp.textContent=ch;sp.className="s"+s;sp.style.setProperty("--r",r+"deg");
+  sp.style.setProperty("--f",(0.5+Math.random()).toFixed(2));
+  $("#wm").appendChild(sp);
+});
+
+/* ================= faders (custom, pointer-based) ================= */
+function makeFader(track,onInput,onDbl){
+  const thumb=track.querySelector(".thumb")||track;
+  let v=0.5;
+  const set=(nv,fire=true)=>{
+    v=Math.min(1,Math.max(0,nv));
+    thumb.style.setProperty("--v",v.toFixed(3));
+    if(fire)onInput(v);
+  };
+  const fromEvent=e=>{
+    const r=track.getBoundingClientRect();
+    set(1-(e.clientY-r.top)/r.height);
+  };
+  track.addEventListener("pointerdown",e=>{
+    track.setPointerCapture(e.pointerId);fromEvent(e);
+    const mv=ev=>fromEvent(ev);
+    const up=()=>{track.removeEventListener("pointermove",mv);
+                  track.removeEventListener("pointerup",up);};
+    track.addEventListener("pointermove",mv);
+    track.addEventListener("pointerup",up);
+  });
+  if(onDbl)track.addEventListener("dblclick",()=>set(onDbl));
+  return {set,get:()=>v};
+}
+
+/* volume fader */
+const volFader=makeFader($("#volTrack"),
+  v=>{vol=v;$("#volVal").textContent=Math.round(v*100);
+      if(master)master.gain.setTargetAtTime(v*v,ctx.currentTime,.03);});
+volFader.set(vol,false);
+
+/* eq rack */
+const bandEls=[];
+for(let i=0;i<NBANDS;i++){
+  const b=document.createElement("div");b.className="band";
+  const t=document.createElement("div");t.className="track";
+  t.innerHTML='<div class="thumb"></div>';
+  const l=document.createElement("label");l.textContent=LABELS[i];
+  b.append(t,l);$("#rack").append(b);
+  const val=document.createElement("span");val.style.display="none";b.append(val);
+  const f=makeFader(t,v=>{applyBand(i,(v*2-1)*12);markCustom();},()=>0.5);
+  f.set(0.5,false);
+  bandEls.push({el:t,fader:f,valEl:val});
+}
+function applyBand(i,dB){
+  eqVals[i]=dB;
+  if(filters[i])filters[i].gain.setTargetAtTime(dB,ctx.currentTime,.03);
+}
+function refreshBands(){
+  bandEls.forEach((b,i)=>b.fader.set((eqVals[i]/12+1)/2,false));
+}
+
+/* presets: name -> 10 gains */
+const PRESETS={
+  FLAT:new Array(NBANDS).fill(0),
+  MOSH:[7,6,4,0,-3,-1,2,5,7,7],
+  BASEMENT:[-6,-3,1,3,4,1,-3,-7,-10,-12],
+  "AM DIAL":[-12,-9,-3,3,5,4,2,-2,-7,-11],
+};
+Object.entries(PRESETS).forEach(([name,gains])=>{
+  const btn=document.createElement("button");btn.textContent=name;
+  btn.onclick=()=>{
+    eqVals=[...gains];refreshBands();
+    document.querySelectorAll(".presets button").forEach(x=>x.classList.remove("act"));
+    btn.classList.add("act");
+  };
+  $("#presets").append(btn);
+  if(name==="FLAT")btn.classList.add("act");
+});
+function markCustom(){
+  document.querySelectorAll(".presets button").forEach(x=>x.classList.remove("act"));
+}
+
+/* ================= audio graph ================= */
+function initAudio(){
+  ctx=new (window.AudioContext||window.webkitAudioContext)();
+  master=ctx.createGain();
+  master.gain.value=vol*vol;
+  analyser=ctx.createAnalyser();
+  analyser.fftSize=2048;
+  analyser.smoothingTimeConstant=.82;
+  timeBuf=new Uint8Array(analyser.fftSize);
+  freqBuf=new Uint8Array(analyser.frequencyBinCount);
+
+  /* 10-band chain */
+  let prev=null;
+  for(let i=0;i<NBANDS;i++){
+    const f=ctx.createBiquadFilter();
+    f.type="peaking";f.frequency.value=FREQS[i];f.Q.value=1.1;f.gain.value=eqVals[i];
+    if(prev)prev.connect(f);
+    prev=f;filters.push(f);
+  }
+  const input=filters[0];
+  filters[NBANDS-1].connect(analyser);
+  analyser.connect(master);
+  master.connect(ctx.destination);
+  return input;
+}
+
+/* ---- test synth: 140 BPM kick / snare / hat / bass through the same chain ---- */
+let noiseBuf=null,nextNote=0,step=0,timer=null;
+const SPB=60/140;                       // seconds per beat (8th = SPB/2)
+
+function makeNoise(){
+  noiseBuf=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);
+  const d=noiseBuf.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+}
+function env(g,t,a,peak,dec){
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(peak,t+a);
+  g.gain.exponentialRampToValueAtTime(.001,t+dec);
+}
+function kick(t){
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.frequency.setValueAtTime(150,t);
+  o.frequency.exponentialRampToValueAtTime(45,t+.11);
+  env(g,t,.002,.95,.24);
+  o.connect(g);g.connect(srcNode);
+  o.start(t);o.stop(t+.26);
+}
+function snare(t){
+  const s=ctx.createBufferSource(),g=ctx.createGain(),bp=ctx.createBiquadFilter();
+  s.buffer=noiseBuf;bp.type="bandpass";bp.frequency.value=1900;bp.Q.value=.9;
+  env(g,t,.001,.5,.16);
+  s.connect(bp);bp.connect(g);g.connect(srcNode);
+  s.start(t);s.stop(t+.18);
+}
+function hat(t){
+  const s=ctx.createBufferSource(),g=ctx.createGain(),hp=ctx.createBiquadFilter();
+  s.buffer=noiseBuf;hp.type="highpass";hp.frequency.value=7500;
+  env(g,t,.001,.16,.05);
+  s.connect(hp);hp.connect(g);g.connect(srcNode);
+  s.start(t);s.stop(t+.06);
+}
+function bass(t,f,dur){
+  const o=ctx.createOscillator(),g=ctx.createGain(),lp=ctx.createBiquadFilter();
+  o.type="sawtooth";o.frequency.value=f;
+  lp.type="lowpass";lp.frequency.value=700;lp.Q.value=2;
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(.42,t+.008);
+  g.gain.setValueAtTime(.42,t+dur-.04);
+  g.gain.linearRampToValueAtTime(0,t+dur);
+  o.connect(lp);lp.connect(g);g.connect(srcNode);
+  o.start(t);o.stop(t+dur+.02);
+}
+/* 16 8th-note steps per bar of the riff */
+const RIFF={0:55,3:55,6:82.41,8:55,11:65.41,14:73.42};   // E G C D-ish
+function schedule(){
+  while(nextNote<ctx.currentTime+.12){
+    const s=step%16,t=nextNote;
+    if(s%4===0)kick(t);
+    if(s===4||s===12)snare(t);
+    hat(t);if(s%4===2)hat(t+SPB/4);
+    if(RIFF[s]!==undefined)bass(t,RIFF[s],SPB*.48);
+    nextNote+=SPB/2;step++;
+  }
+}
+
+/* ================= transport ================= */
+let connectTO=null;
+
+function goLive(){
+  if(playing)return;
+  playing=true;
+  clearTimeout(connectTO);
+  document.body.classList.add("on");
+  $("#play").textContent="STOP";
+  $("#air").textContent="ON AIR";
+  if("mediaSession"in navigator)navigator.mediaSession.playbackState="playing";
+}
+
+async function start(){
+  try{
+    if(!ctx){
+      const input=initAudio();
+      await ctx.resume();
+      if(STREAM_URL){
+        audioEl=new Audio();
+        audioEl.crossOrigin="anonymous";     /* server sends ACAO:* */
+        audioEl.preload="auto";
+        audioEl.src=STREAM_URL+(STREAM_URL.includes("?")?"&":"?")+"nocache="+Date.now();
+        audioEl.playsInline=true;
+        try{srcNode=ctx.createMediaElementSource(audioEl);srcNode.connect(input);}
+        catch(e){showErr("ROUTING FAILED — "+e.message);}
+        audioEl.addEventListener("playing",goLive);
+        audioEl.addEventListener("waiting",()=>{$("#play").textContent="…";});
+        audioEl.addEventListener("error",()=>{
+          const c=audioEl.error?("CODE "+audioEl.error.code):"";
+          showErr("SIGNAL LOST — MEDIA ERROR "+c+" (CHECK URL / CORS)");
+          stop();
+        });
+        connectTO=setTimeout(()=>{
+          if(!playing)showErr("STILL CONNECTING — SERVER REACHABLE BUT NO AUDIO YET");
+        },9000);
+        try{await audioEl.play();}
+        catch(e){clearTimeout(connectTO);stop();
+          showErr("COULD NOT START — "+e.name+": "+e.message);return;}
+      }else{
+        $("#demoTag").hidden=false;
+        makeNoise();
+        srcNode=ctx.createGain();srcNode.gain.value=1;
+        srcNode.connect(input);
+        nextNote=ctx.currentTime+.06;
+        timer=setInterval(schedule,25);
+        goLive();
+      }
+    }else{
+      await ctx.resume();
+      if(audioEl){
+        try{await audioEl.play();}
+        catch(e){showErr("RESUME FAILED — "+e.message);return;}
+      }
+      if(timer===null&&!STREAM_URL){nextNote=ctx.currentTime+.06;timer=setInterval(schedule,25);}
+      goLive();
+    }
+  }catch(err){
+    showErr("START FAILED — "+((err&&err.message)||err));
+    console.error(err);
+  }
+}
+
+function stop(){
+  playing=false;
+  clearTimeout(connectTO);
+  if(audioEl)audioEl.pause();
+  if(timer!==null){clearInterval(timer);timer=null;}
+  document.body.classList.remove("on");
+  $("#play").textContent="PLAY";
+  $("#air").textContent="OFF AIR";
+  if("mediaSession"in navigator)navigator.mediaSession.playbackState="paused";
+}
+$("#play").addEventListener("click",()=>playing?stop():start());
+
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space"){e.preventDefault();playing?stop():start();}
+  else if(e.key==="ArrowUp"){e.preventDefault();volFader.set(Math.min(1,vol+.05));}
+  else if(e.key==="ArrowDown"){e.preventDefault();volFader.set(Math.max(0,vol-.05));}
+});
+
+if("mediaSession"in navigator){
+  navigator.mediaSession.metadata=new MediaMetadata({
+    title:"Radio Change",artist:"Live",album:"radiochange.fm"});
+  navigator.mediaSession.setActionHandler("play",start);
+  navigator.mediaSession.setActionHandler("pause",stop);
+}
+
+/* ================= ticker + now playing ================= */
+function setTicker(msg){$("#tick").textContent=msg+msg;}
+setTicker(STREAM_URL
+  ?"RADIO CHANGE · LIVE · NO ADS · NO PLAYLIST COMMITTEE · 24 HOURS · "
+  :"RADIO CHANGE · TEST SIGNAL — SYNTHESIZED IN YOUR BROWSER · DRAG THE FADERS, THE SCOPE LISTENS · SPACE TO STOP · ");
+
+/* Shoutcast v2 JSONP stats — same trick the station page uses, no CORS needed */
+let lastTitle="";
+function pollNowPlaying(){
+  if(!STREAM_URL)return;
+  const cb="rc_"+Math.random().toString(36).slice(2);
+  const s=document.createElement("script");
+  const done=()=>{delete window[cb];s.remove();clearTimeout(to);};
+  const to=setTimeout(done,8000);
+  window[cb]=r=>{
+    done();
+    let t=(r&&typeof r.songtitle==="string")?r.songtitle.trim():"";
+    if(!t||r.streamstatus===0)t="RADIO CHANGE — OFF AIR";
+    if(t!==lastTitle){
+      lastTitle=t;
+      setTicker(("NOW PLAYING — "+t+" · ").toUpperCase());
+      if("mediaSession"in navigator)
+        navigator.mediaSession.metadata=new MediaMetadata({title:t,artist:"Radio Change"});
+    }
+  };
+  s.onerror=done;
+  s.src=STATS_BASE+"stats?sid=1&json=1&callback="+cb+"&_="+Date.now();
+}
+pollNowPlaying();
+setInterval(pollNowPlaying,20000);
+
+/* ================= scope ================= */
+const cv=$("#scope"),g2=cv.getContext("2d");
+function sizeCanvas(){
+  const dpr=Math.min(2,devicePixelRatio||1);
+  cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;
+}
+new ResizeObserver(sizeCanvas).observe(cv);
+sizeCanvas();
+
+function drawScope(){
+  const w=cv.width,h=cv.height,mid=h/2;
+  g2.clearRect(0,0,w,h);
+  const on=playing&&analyser;
+  let data=null;
+  if(on){
+    analyser.getByteTimeDomainData(timeBuf);
+    data=timeBuf;
+  }
+  const passes=on?[
+    {ox:3*w/1180,oy:2,col:"#ff2d16",a:.5},   // misregistered red copy
+    {ox:0,oy:0,col:"#100f0d",a:.95},         // ink pass
+  ]:[{ox:0,oy:0,col:"#100f0d",a:.4}];
+
+  passes.forEach(p=>{
+    g2.beginPath();
+    g2.strokeStyle=p.col;g2.globalAlpha=p.a;g2.lineWidth=Math.max(2,w/420);
+    const N=data?data.length:w/3|0;
+    for(let i=0;i<N;i++){
+      const x=i/(N-1)*w;
+      let y;
+      if(data)y=mid+(((data[i]-128)/128)*mid/1.15);
+      else y=mid+Math.sin(i*.02+x*.002)*2;
+      y+=p.oy+(on?(Math.sin(i*57.3)*1.2):0);
+      y=Math.round(y/4)*4;                     // chunky photocopier quantize
+      i?g2.lineTo(x+p.ox,y):g2.moveTo(x+p.ox,y);
+    }
+    g2.stroke();
+  });
+  g2.globalAlpha=1;
+}
+
+/* ================= frame loop ================= */
+function frame(){
+  if(playing&&analyser){
+    analyser.getByteFrequencyData(freqBuf);
+    let sum=0;for(let i=1;i<10;i++)sum+=freqBuf[i];
+    const target=Math.min(1,sum/(9*235));
+    bassLvl+=(target-bassLvl)*.25;
+    $("#wm").style.setProperty("--e",bassLvl.toFixed(3));
+  }else{
+    bassLvl*=.9;
+    $("#wm").style.setProperty("--e",bassLvl.toFixed(3));
+  }
+  drawScope();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
