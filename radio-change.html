@@ -123,7 +123,17 @@
   /* ============ console: volume + eq ============ */
   .console{display:grid;grid-template-columns:auto 1fr;gap:clamp(14px,3vw,34px);align-items:stretch}
 
-  .vol{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .vol{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+  .band{position:relative}
+
+  .bubble{
+    position:absolute;top:-16px;left:50%;translate:-50%;z-index:20;
+    font-family:var(--f-type);font-weight:700;font-size:10px;
+    background:var(--ink);color:var(--acid);padding:2px 6px;
+    opacity:0;pointer-events:none;transition:opacity .12s;
+    white-space:nowrap;
+  }
+  .track.dragging~.bubble{opacity:1}
   .vol label,.eq>label{
     font-family:var(--f-type);font-weight:700;font-size:11px;letter-spacing:3px;
   }
@@ -206,6 +216,7 @@
   <section class="console">
     <div class="vol">
       <div class="fader volFader track" id="volTrack"><div class="thumb"></div></div>
+      <span class="bubble" id="volBubble">80%</span>
       <label>VOL&nbsp;<b id="volVal">80</b></label>
     </div>
     <div class="eq">
@@ -300,6 +311,7 @@ function makeFader(track,onInput,onDbl){
 /* volume fader */
 const volFader=makeFader($("#volTrack"),
   v=>{vol=v;$("#volVal").textContent=Math.round(v*100);
+      $("#volBubble").textContent=Math.round(v*100)+"%";
       if(master)master.gain.setTargetAtTime(v*v,ctx.currentTime,.03);});
 volFader.set(vol,false);
 
@@ -309,12 +321,16 @@ for(let i=0;i<NBANDS;i++){
   const b=document.createElement("div");b.className="band";
   const t=document.createElement("div");t.className="track";
   t.innerHTML='<div class="thumb"></div>';
+  const bub=document.createElement("span");bub.className="bubble";
   const l=document.createElement("label");l.textContent=LABELS[i];
-  b.append(t,l);$("#rack").append(b);
-  const val=document.createElement("span");val.style.display="none";b.append(val);
-  const f=makeFader(t,v=>{applyBand(i,(v*2-1)*12);markCustom();},()=>0.5);
-  f.set(0.5,false);
-  bandEls.push({el:t,fader:f,valEl:val});
+  b.append(t,bub,l);$("#rack").append(b);
+  const f=makeFader(t,v=>{
+    applyBand(i,(v*2-1)*12);
+    bub.textContent=(eqVals[i]>0?"+":"")+Math.round(eqVals[i]);
+    markCustom();
+  },()=>0.5);
+  f.set((eqVals[i]/12+1)/2,false);
+  bandEls.push({el:t,fader:f,bubble:bub});
 }
 function applyBand(i,dB){
   eqVals[i]=dB;
