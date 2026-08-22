@@ -106,9 +106,11 @@
   body.on #play{background:var(--ink);box-shadow:0 0 0 5px var(--paper),0 0 0 8px var(--ink)}
 
   #hint{
-    position:absolute;left:50%;top:calc(50% + clamp(74px,9.5vw,102px));translate:-50%;
+    position:absolute;right:12px;top:10px;z-index:5;
     font-family:var(--f-type);font-weight:700;font-size:11px;letter-spacing:2px;
-    text-transform:uppercase;opacity:.5;pointer-events:none;white-space:nowrap;
+    text-transform:uppercase;background:rgba(236,230,214,.75);
+    border:2px solid var(--ink);padding:3px 8px;
+    pointer-events:none;white-space:nowrap;
   }
   body.on #hint{display:none}
 
