@@ -100,9 +100,17 @@
     text-shadow:0 0 6px rgba(236,230,214,.55),1px 1px 0 rgba(236,230,214,.35);
     transition:transform .12s;
   }
-  #play:hover{transform:rotate(-8deg) scale(1.04)}
+  #play:hover{transform:rotate(-8deg) scale(1.04);
+    box-shadow:0 0 0 5px var(--paper),0 0 0 8px var(--red),7px 8px 0 rgba(255,45,22,.30)}
   #play:active{transform:rotate(-8deg) scale(.96)}
   body.on #play{background:var(--ink);box-shadow:0 0 0 5px var(--paper),0 0 0 8px var(--ink)}
+
+  #hint{
+    position:absolute;left:50%;top:calc(50% + clamp(74px,9.5vw,102px));translate:-50%;
+    font-family:var(--f-type);font-weight:700;font-size:11px;letter-spacing:2px;
+    text-transform:uppercase;opacity:.5;pointer-events:none;white-space:nowrap;
+  }
+  body.on #hint{display:none}
 
   #demoTag{
     position:absolute;left:12px;top:10px;background:var(--ink);color:var(--acid);
@@ -116,7 +124,7 @@
   .ticker div{
     display:inline-block;padding:7px 0;
     font-family:var(--f-type);font-weight:700;font-size:13px;letter-spacing:2px;
-    animation:tick 18s linear infinite;
+    animation:tick 18s linear infinite;transition:opacity .22s;
   }
   @keyframes tick{to{transform:translateX(-50%)}}
 
@@ -209,6 +217,7 @@
   <section class="deck">
     <canvas id="scope"></canvas>
     <button id="play">PLAY</button>
+    <div id="hint">press play — it's live</div>
     <div id="demoTag" hidden>TEST SIGNAL</div>
     <div class="ticker"><div id="tick"></div></div>
   </section>
@@ -554,7 +563,10 @@ if("mediaSession"in navigator){
 }
 
 /* ================= ticker + now playing ================= */
-function setTicker(msg){$("#tick").textContent=msg+msg;}
+function setTicker(msg){
+  const el=$("#tick");el.style.opacity=0;
+  setTimeout(()=>{el.textContent=msg+msg;el.style.opacity=1;},220);
+}
 setTicker(STREAM_URL
   ?"RADIO CHANGE · LIVE · NO ADS · NO PLAYLIST COMMITTEE · 24 HOURS · "
   :"RADIO CHANGE · TEST SIGNAL — SYNTHESIZED IN YOUR BROWSER · DRAG THE FADERS, THE SCOPE LISTENS · SPACE TO STOP · ");
@@ -610,6 +622,7 @@ function drawScope(){
   passes.forEach(p=>{
     g2.beginPath();
     g2.strokeStyle=p.col;g2.globalAlpha=p.a;g2.lineWidth=Math.max(2,w/420);
+    g2.lineJoin=g2.lineCap="round";
     const N=data?data.length:w/3|0;
     for(let i=0;i<N;i++){
       const x=i/(N-1)*w;
