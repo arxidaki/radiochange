@@ -186,6 +186,20 @@
   .band .thumb{width:40px;height:22px}
   .band label{font-family:var(--f-type);font-weight:700;font-size:10px;letter-spacing:1px;opacity:.7}
 
+  /* ============ just played ============ */
+  .history{
+    display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+    font-family:var(--f-type);font-weight:700;font-size:11px;letter-spacing:2px;
+    text-transform:uppercase;min-height:0;
+  }
+  .history b{background:var(--ink);color:var(--paper);padding:3px 8px;flex:none}
+  .history ol{display:flex;gap:18px;list-style:none;padding:0;margin:0;opacity:.55;
+    overflow:hidden}
+  .history li{
+    max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:2px;
+  }
+
   footer.hints{
     margin-top:auto;font-family:var(--f-type);font-size:10px;letter-spacing:2px;opacity:.45;
     text-transform:uppercase;
@@ -203,6 +217,7 @@
     .vol .track{height:90px;width:36px}
     .band .track{height:96px}
     footer.hints{display:none}
+    .history{display:none}
   }
 </style>
 </head>
@@ -222,6 +237,11 @@
     <div id="hint">press play — it's live</div>
     <div id="demoTag" hidden>TEST SIGNAL</div>
     <div class="ticker"><div id="tick"></div></div>
+  </section>
+
+  <section class="history">
+    <b>JUST PLAYED</b>
+    <ol id="hist"></ol>
   </section>
 
   <section class="console">
@@ -603,6 +623,7 @@ function pollNowPlaying(){
     if(t!==lastTitle){
       lastTitle=t;
       setTicker(("NOW PLAYING — "+t+" · ").toUpperCase());
+      pushHist(t);
       document.title=t+" — Radio Change";
       if("mediaSession"in navigator)
         navigator.mediaSession.metadata=new MediaMetadata({
@@ -615,6 +636,27 @@ function pollNowPlaying(){
 }
 pollNowPlaying();
 setInterval(pollNowPlaying,20000);
+
+/* ============ just played ============ */
+let hist=[];
+try{hist=(JSON.parse(localStorage.getItem("radiochange.hist")||"[]")||[])
+      .filter(x=>typeof x==="string").slice(0,5);}catch(e){}
+function renderHist(){
+  const ol=$("#hist");ol.textContent="";
+  hist.forEach(t=>{
+    const li=document.createElement("li");
+    li.textContent=t.length>40?t.slice(0,39)+"…":t;
+    ol.append(li);
+  });
+}
+function pushHist(t){
+  if(t==="RADIO CHANGE — OFF AIR")return;
+  if(hist[0]===t)return;
+  hist.unshift(t);hist=hist.slice(0,5);
+  try{localStorage.setItem("radiochange.hist",JSON.stringify(hist));}catch(e){}
+  renderHist();
+}
+renderHist();
 
 /* ================= scope ================= */
 const cv=$("#scope"),g2=cv.getContext("2d");
