@@ -254,6 +254,7 @@
 
 const STREAM_URL = "https://s26.myradiostream.com:22656/stream";
 const STATS_BASE = "https://s26.myradiostream.com:22656/";
+const LOGO = "https://myradiostream.com/station/uploads/logo/81785af28ee3c7d0e28c3461a37fdd506ed6a3ff.png";
 
 /* ---------------- state ---------------- */
 let ctx=null, analyser=null, master=null, srcNode=null, audioEl=null;
@@ -559,7 +560,8 @@ document.addEventListener("keydown",e=>{
 
 if("mediaSession"in navigator){
   navigator.mediaSession.metadata=new MediaMetadata({
-    title:"Radio Change",artist:"Live",album:"radiochange.fm"});
+    title:"Radio Change",artist:"Live",album:"radiochange.fm",
+    artwork:[{src:LOGO,sizes:"512x512",type:"image/png"}]});
   navigator.mediaSession.setActionHandler("play",start);
   navigator.mediaSession.setActionHandler("pause",stop);
 }
@@ -599,8 +601,11 @@ function pollNowPlaying(){
     if(t!==lastTitle){
       lastTitle=t;
       setTicker(("NOW PLAYING — "+t+" · ").toUpperCase());
+      document.title=t+" — Radio Change";
       if("mediaSession"in navigator)
-        navigator.mediaSession.metadata=new MediaMetadata({title:t,artist:"Radio Change"});
+        navigator.mediaSession.metadata=new MediaMetadata({
+          title:t,artist:"Radio Change",
+          artwork:[{src:LOGO,sizes:"512x512",type:"image/png"}]});
     }
   };
   s.onerror=done;
