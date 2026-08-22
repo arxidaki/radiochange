@@ -575,6 +575,17 @@ setTicker(STREAM_URL
 
 /* Shoutcast v2 JSONP stats — same trick the station page uses, no CORS needed */
 let lastTitle="";
+function tidyTitle(raw){
+  let s=raw.replace(/\s+/g," ").trim();
+  s=s.replace(/^\d{1,3}[\s.\-_]+/,"");                 /* leading track number */
+  const parts=s.split(/ [-\u2013] /).map(x=>x.trim()).filter(Boolean);
+  /* collapse "artist - 01 artist - title" duplication */
+  if(parts.length>=3){
+    const a=parts[0].toLowerCase(), b=parts[1].replace(/^\d{1,3}[\s.\-_]+/,"").toLowerCase();
+    if(a===b)parts.splice(1,1);
+  }
+  return parts.join(" \u2014 ");
+}
 function pollNowPlaying(){
   if(!STREAM_URL)return;
   const cb="rc_"+Math.random().toString(36).slice(2);
@@ -583,7 +594,7 @@ function pollNowPlaying(){
   const to=setTimeout(done,8000);
   window[cb]=r=>{
     done();
-    let t=(r&&typeof r.songtitle==="string")?r.songtitle.trim():"";
+    let t=(r&&typeof r.songtitle==="string")?tidyTitle(r.songtitle):"";
     if(!t||r.streamstatus===0)t="RADIO CHANGE — OFF AIR";
     if(t!==lastTitle){
       lastTitle=t;
