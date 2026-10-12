@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en" data-air="off">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radio Change: Test Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,100..800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0E0C14;--paper:#F4EFE1;
+    --d:clamp(150px,32vmin,330px);
+    --pad:clamp(12px,1.6vw,24px);
+    --ease:cubic-bezier(.7,0,.15,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--ink);color:var(--paper);height:100dvh;overflow:hidden;
+    display:grid;grid-template-rows:minmax(0,1fr) auto;
+    font-family:"Martian Mono",ui-monospace,Consolas,monospace;font-stretch:87.5%;
+    -webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
+
+  /* ---------- the bars: test card, spectrum and equaliser in one ---------- */
+  #stage{position:relative;min-height:0}
+  #bars{position:absolute;inset:0;display:flex}
+  .col{position:relative;flex:1;min-width:0;cursor:ns-resize;touch-action:none;
+    background:color-mix(in oklab,var(--c) 30%,var(--ink))}
+  .bar{position:absolute;inset:0;background:var(--c);transform-origin:50% 100%;will-change:transform}
+  .gain{position:absolute;left:0;right:0;height:4px;margin-top:-2px;background:var(--paper);
+    top:calc(50% - var(--g,0)*36%);opacity:0;transition:opacity .3s;pointer-events:none}
+  [data-air=on] .gain{opacity:1}
+  .gain b{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);white-space:nowrap;
+    background:var(--paper);color:var(--ink);font-size:10px;font-weight:700;padding:3px 5px;
+    opacity:0;transition:opacity .2s}
+  .col:hover .gain b,.col.drag .gain b,.col.set .gain b{opacity:1}
+  .hz{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);pointer-events:none;
+    background:var(--ink);color:var(--paper);font-size:clamp(8px,.8vw,11px);font-weight:700;padding:3px 6px}
+
+  /* ---------- ident, circle, status: stacked on the centre line ---------- */
+  .stack{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(12px,2.4vh,26px);pointer-events:none}
+  .box{background:var(--ink);color:var(--paper);pointer-events:auto;white-space:nowrap}
+  .ident{font-weight:800;font-stretch:112.5%;font-size:clamp(19px,3.6vw,54px);letter-spacing:.04em;
+    padding:.28em .5em .3em;line-height:1}
+  .status{font-weight:700;font-size:clamp(10px,1.05vw,14px);letter-spacing:.14em;padding:.6em .9em;display:flex;gap:1.2em}
+  .status b{font-weight:800}
+  [data-air=on] .status b{color:#FF5140}
+  [data-air=dialing] .status b{animation:blink .35s steps(2,jump-none) infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  #play{
+    position:relative;flex:none;width:var(--d);height:var(--d);border-radius:50%;cursor:pointer;pointer-events:auto;
+    background:var(--paper);color:var(--ink);border:clamp(8px,1.1vmin,13px) solid var(--ink);
+    box-shadow:0 0 0 clamp(3px,.5vmin,6px) var(--paper);
+    display:grid;place-items:center;overflow:hidden;font:inherit;
+    transition:transform .2s var(--ease);
+  }
+  #play:hover{transform:scale(1.03)}
+  #play:active{transform:scale(.97)}
+  #play svg{grid-area:1/1;width:44%;height:44%;fill:currentColor;transition:opacity .2s}
+  #play .i-dial{opacity:0}
+  [data-air=on] #play .i-play,[data-air=dialing] #play .i-play{opacity:0}
+  [data-air=dialing] #play .i-dial{opacity:1;animation:blink .35s steps(2,jump-none) infinite}
+  /* on air the circle is a scope window */
+  #scope{grid-area:1/1;width:100%;height:100%;opacity:0;transition:opacity .3s}
+  [data-air=on] #scope{opacity:1}
+  .stop{grid-area:1/1;align-self:end;margin-bottom:17%;font-weight:800;font-size:clamp(9px,1.1vmin,12px);
+    letter-spacing:.16em;display:flex;align-items:center;gap:.7em;opacity:0;transition:opacity .2s}
+  .stop::before{content:"";width:.95em;height:.95em;background:currentColor}
+  [data-air=on] .stop{opacity:1}
+
+  /* ---------- the strip ---------- */
+  footer{position:relative;z-index:2;background:var(--ink);display:flex;align-items:center;
+    gap:clamp(14px,2.4vw,36px);padding:var(--pad) calc(var(--pad)*1.2);min-width:0}
+  .np{min-width:0;flex:1}
+  .lab{display:block;font-weight:700;font-size:10px;letter-spacing:.16em;opacity:.6;margin-bottom:.6em}
+  #np{font-weight:800;font-stretch:100%;font-size:clamp(14px,1.55vw,22px);line-height:1.15;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #jp{font-size:10px;font-weight:500;letter-spacing:.04em;opacity:.6;margin-top:.7em;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ctl{flex:none}
+  #presets{display:flex;gap:6px}
+  #presets button{font:inherit;font-weight:700;font-size:10px;letter-spacing:.08em;cursor:pointer;
+    background:none;color:var(--paper);border:2px solid var(--paper);padding:.7em .8em}
+  #presets button:hover{background:rgba(244,239,225,.16)}
+  #presets button.act{background:var(--paper);color:var(--ink)}
+  /* volume as a greyscale step wedge */
+  #vol{display:flex;gap:3px;height:28px;cursor:ew-resize;touch-action:none}
+  #vol i{width:clamp(9px,1vw,14px);height:100%;border:1px solid rgba(244,239,225,.3)}
+  #vol i.on{background:var(--s);border-color:var(--s)}
+
+  #err{position:fixed;z-index:9;left:50%;top:var(--pad);transform:translateX(-50%);display:none;
+    background:var(--paper);color:var(--ink);padding:.7em 1em;font-weight:800;font-size:11px;letter-spacing:.08em}
+
+  @media (max-width:860px){
+    footer{flex-wrap:wrap;row-gap:12px}
+    .np{flex:1 0 100%}
+    .hz{display:none}
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="bars"></div>
+    <div class="stack">
+      <div class="box ident">RADIO CHANGE</div>
+      <button id="play" aria-label="Play Radio Change">
+        <canvas id="scope" aria-hidden="true"></canvas>
+        <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 3.5 L21.5 12 L7.5 20.5 Z"/></svg>
+        <svg class="i-dial" viewBox="0 0 24 24" aria-hidden="true"><circle cx="4" cy="12" r="2.6"/><circle cx="12" cy="12" r="2.6"/><circle cx="20" cy="12" r="2.6"/></svg>
+        <span class="stop">STOP</span>
+      </button>
+      <div class="box status"><b id="st">OFF AIR</b><span id="clock"></span></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="np" aria-live="polite">
+      <span class="lab" id="npLab">ON NOW</span>
+      <div id="np">&nbsp;</div>
+      <div id="jp"></div>
+    </div>
+    <div class="ctl">
+      <span class="lab">EQ, OR DRAG ANY BAR</span>
+      <div id="presets"></div>
+    </div>
+    <div class="ctl">
+      <span class="lab">VOLUME</span>
+      <div id="vol" role="slider" aria-label="Volume" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+  </footer>
+  <div id="err" role="alert"></div>
+
+<script src="engine.js"></script>
+<script>
+/* =====================================================================
+   TEST CARD: off air it is the broadcast colour bars.
+   On air the same ten bars become the spectrum, one per EQ band, and
+   dragging a bar up or down boosts or cuts that band. The centre circle
+   is PLAY, then a scope window.
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const play=$("#play");
+/* brightest to darkest, the way a test card runs */
+const COLS=["#F4EFE1","#FFD21F","#C6F135","#22C7D6","#14B86A","#FF5CA8","#FF8A1F","#F5311B","#7A3BFF","#1432C8"];
+
+/* ---------------- bars ---------------- */
+const bars=[];
+COLS.forEach((c,i)=>{
+  const col=document.createElement("div");
+  col.className="col";col.style.setProperty("--c",c);
+  col.innerHTML='<i class="bar"></i><u class="gain"><b></b></u><span class="hz">'+radio.LABELS[i]+'</span>';
+  $("#bars").append(col);
+  bars.push({col:col,bar:col.children[0],gain:col.children[1],lab:col.children[1].firstChild,v:1});
+  /* relative drag, so a stray click never jumps the EQ */
+  col.addEventListener("pointerdown",e=>{
+    col.setPointerCapture(e.pointerId);col.classList.add("drag");
+    const y0=e.clientY,g0=radio.eq[i],h=col.clientHeight;
+    const mv=ev=>{
+      let dB=g0-(ev.clientY-y0)/(h*.36)*12;
+      if(Math.abs(dB)<.6)dB=0;
+      radio.setBand(i,dB);
+    };
+    const up=()=>{col.classList.remove("drag");
+      col.removeEventListener("pointermove",mv);col.removeEventListener("pointerup",up);};
+    col.addEventListener("pointermove",mv);col.addEventListener("pointerup",up);
+  });
+  col.addEventListener("dblclick",()=>radio.setBand(i,0));
+});
+function paintEq(){
+  bars.forEach((b,i)=>{
+    const dB=radio.eq[i];
+    b.gain.style.setProperty("--g",(dB/12).toFixed(3));
+    b.lab.textContent=(dB>0?"+":"")+Math.round(dB)+" dB";
+    b.col.classList.toggle("set",Math.abs(dB)>=.5);
+  });
+  const name=radio.presetName();
+  document.querySelectorAll("#presets button").forEach(x=>x.classList.toggle("act",x.textContent===name));
+}
+Object.keys(radio.PRESETS).forEach(name=>{
+  const b=document.createElement("button");b.textContent=name;
+  b.onclick=()=>radio.setPreset(name);
+  $("#presets").append(b);
+});
+radio.on("eq",paintEq);paintEq();
+
+/* ---------------- volume wedge ---------------- */
+const volEl=$("#vol"),STEPS=10;
+for(let i=0;i<STEPS;i++){
+  const s=document.createElement("i");
+  s.style.setProperty("--s","color-mix(in oklab,#F4EFE1 "+Math.round(22+i*78/(STEPS-1))+"%,#0E0C14)");
+  volEl.append(s);
+}
+function paintVol(v){
+  [...volEl.children].forEach((s,i)=>s.classList.toggle("on",v>(i+.5)/STEPS-.05001));
+  volEl.setAttribute("aria-valuenow",Math.round(v*100));
+}
+radio.on("volume",paintVol);paintVol(radio.volume);
+volEl.addEventListener("pointerdown",e=>{
+  volEl.setPointerCapture(e.pointerId);
+  const at=ev=>{const r=volEl.getBoundingClientRect();radio.setVolume((ev.clientX-r.left)/r.width);};
+  at(e);
+  const up=()=>{volEl.removeEventListener("pointermove",at);volEl.removeEventListener("pointerup",up);};
+  volEl.addEventListener("pointermove",at);volEl.addEventListener("pointerup",up);
+});
+
+/* ---------------- text ---------------- */
+function paintTrack(){
+  const t=radio.track;
+  $("#npLab").textContent=radio.state==="on"?"NOW PLAYING":"ON NOW";
+  $("#np").textContent=t?t.text.toUpperCase():"ROCK · 24 HOURS · NO ADS";
+  const past=radio.played().slice(0,3).map(p=>p.text.toUpperCase());
+  $("#jp").textContent=past.length?"JUST PLAYED  "+past.join("  /  "):"";
+}
+radio.on("track",paintTrack);radio.on("history",paintTrack);paintTrack();
+radio.on("state",s=>{
+  $("#st").textContent=s==="on"?"ON AIR":s==="dialing"?"DIALING":"OFF AIR";
+  play.setAttribute("aria-label",s==="off"?"Play Radio Change":"Stop");
+  paintTrack();
+});
+radio.on("error",msg=>{
+  const e=$("#err");e.textContent=msg;e.style.display="block";
+  clearTimeout(e.t);e.t=setTimeout(()=>{e.style.display="none";},6000);
+});
+play.addEventListener("click",()=>radio.toggle());
+
+const MON=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+function tickClock(){
+  const d=new Date(),p=n=>String(n).padStart(2,"0");
+  $("#clock").textContent=p(d.getDate())+" "+MON[d.getMonth()]+" "+d.getFullYear()+"  "+
+    p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());
+}
+tickClock();setInterval(tickClock,1000);
+
+/* ---------------- scope in the circle ---------------- */
+const sc=$("#scope"),g=sc.getContext("2d");
+function sizeScope(){
+  const dpr=Math.min(2,devicePixelRatio||1);
+  sc.width=Math.round(sc.clientWidth*dpr);sc.height=Math.round(sc.clientHeight*dpr);
+}
+new ResizeObserver(sizeScope).observe(sc);sizeScope();
+function drawScope(wave){
+  const w=sc.width,h=sc.height;
+  g.clearRect(0,0,w,h);
+  if(!wave)return;
+  g.beginPath();g.strokeStyle="#0E0C14";g.lineWidth=Math.max(3,w/70);g.lineJoin=g.lineCap="round";
+  const N=512,mid=h*.44;
+  for(let i=0;i<N;i++){
+    const x=i/(N-1)*w,y=mid+(wave[i*2]-128)/128*h*.34;
+    i?g.lineTo(x,y):g.moveTo(x,y);
+  }
+  g.stroke();
+}
+
+/* ---------------- frame loop ---------------- */
+function frame(now){
+  const s=radio.sample(),dial=radio.state==="dialing";
+  bars.forEach((b,i)=>{
+    let tgt=1,k=.07;                                      // off air: stand at full height
+    if(dial){tgt=.5+.42*Math.sin(now/130-i*.7);k=.3;}     // dialing: a level check runs across
+    else if(s.on){tgt=Math.max(.015,Math.min(1,s.bands[i]*1.22));k=tgt>b.v?.6:.22;}
+    b.v+=(tgt-b.v)*k;
+    b.bar.style.transform="scaleY("+b.v.toFixed(4)+")";
+  });
+  drawScope(s.wave);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
