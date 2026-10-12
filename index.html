@@ -3,210 +3,105 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Radio Change — Directions</title>
+<title>Radio Change: Directions</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:#0b0b0c;color:#e8e6e1;min-height:100%;
-    font-family:"Helvetica Neue",Arial,sans-serif;
-    padding:clamp(24px,5vw,64px);-webkit-font-smoothing:antialiased;
-  }
-  header{max-width:1200px;margin:0 auto clamp(20px,3vw,36px)}
-  h1{font-size:clamp(22px,3.4vw,38px);letter-spacing:clamp(4px,1vw,10px);font-weight:800}
-  header p{margin-top:10px;color:#8b8781;font-size:14px;max-width:66ch;line-height:1.6}
-  h3{max-width:1200px;margin:0 auto clamp(12px,2vw,18px);font-size:11px;letter-spacing:4px;
-     color:#6f6c67;text-transform:uppercase}
-  .grid{
-    max-width:1200px;margin:0 auto clamp(34px,5vw,60px);display:grid;gap:clamp(14px,2vw,24px);
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  }
-  a.card{
-    display:block;text-decoration:none;color:inherit;border-radius:10px;overflow:hidden;
-    background:#141416;border:1px solid #232326;transition:.2s;
-  }
-  a.card:hover{border-color:#4a4a50;transform:translateY(-3px)}
-  .swatch{height:110px}
-  .s5{background:linear-gradient(100deg,#f4efe1 30%,#ffd200 30% 58%,#ff3d94 58% 82%,#1f4fd8 82%)}
-  .s6{background:linear-gradient(100deg,#2a0a4a 26%,#ff4d00 26% 52%,#ff1f8f 52% 74%,#00d6b4 74% 90%,#c8ff00 90%)}
-  .s7{background:linear-gradient(100deg,#0b0b0d 22%,#0033ff 22% 48%,#ff0a70 48% 70%,#d6ff00 70% 88%,#f2efe6 88%)}
-  .s8{background:linear-gradient(100deg,#f2ede0 26%,#1f4fd8 26% 50%,#ff3d94 50% 76%,#ffd200 76%)}
-  .s9{background:linear-gradient(100deg,#f4efe3 26%,#16357f 26% 50%,#e0233f 50% 76%,#f7c400 76%)}
-  .s15{background:
-     linear-gradient(160deg,#ece6d6 0 38%,#2b2b40 38% 92%,#ece6d6 92%),
-     #ece6d6}
-  .s16{background:
-     linear-gradient(74deg,#ece6d6 0 34%,#100f0d 34%,transparent 34.5%),
-     radial-gradient(circle at 50% 50%,#ff2d16 0 26%,#ece6d6 27%),
-     #ece6d6}
-  .s14{background:
-     radial-gradient(circle at 70% 44%,#ff2d16 0 17%,transparent 17%),
-     radial-gradient(circle at 22% 70%,#e4ff33 0 13%,transparent 13%),
-     repeating-linear-gradient(58deg,#100f0d 0 6px,transparent 6px 13px),
-     linear-gradient(74deg,#ece6d6 14%,#100f0d 14% 27%,#e4ff33 27% 41%,#ece6d6 41% 55%,
-       #ff2d16 55% 68%,#100f0d 68% 80%,#ece6d6 80%)}
-  .s13{background:
-     radial-gradient(circle at 72% 46%,#ff2d16 0 19%,transparent 19%),
-     linear-gradient(74deg,#ece6d6 18%,#100f0d 18% 33%,#ece6d6 33% 46%,#e4ff33 46% 61%,
-       #100f0d 61% 72%,#ece6d6 72%)}
-  .s12{background:
-     radial-gradient(circle at 74% 52%,#ff2d16 0 17%,transparent 17%),
-     linear-gradient(100deg,#ece6d6 30%,#100f0d 30% 54%,#e4ff33 54% 76%,#ece6d6 76%)}
-  .s10,.s11{background:
-     radial-gradient(circle at 62% 50%,#ff3d94 0 16%,transparent 16%),
-     linear-gradient(100deg,#f2ede0 22%,#1f4fd8 22% 44%,#ffd200 44% 66%,#f2ede0 66%)}
-  .s11{background:
-     radial-gradient(circle at 38% 50%,#1f4fd8 0 15%,transparent 15%),
-     linear-gradient(100deg,#f2ede0 18%,#ff3d94 18% 40%,#ffd200 40% 62%,#f2ede0 62%)}
-  .s1{background:linear-gradient(135deg,#100e0c 40%,#c3b491)}
-  .s2{background:linear-gradient(135deg,#0d0f11 40%,#b9bcc0)}
-  .s3{background:linear-gradient(135deg,#eae4d6 55%,#e4ff33)}
-  .s4{background:linear-gradient(135deg,#040705 45%,#65ff9d)}
-  .body{padding:15px 17px 19px}
-  .n{font-size:10px;letter-spacing:3px;color:#6f6c67}
-  h2{font-size:17px;margin:6px 0 8px;letter-spacing:1px}
-  .body p{font-size:13px;margin:0;color:#8b8781;line-height:1.55}
-  .out{opacity:.4}
-  .out:hover{opacity:.7}
-  .verdict{display:inline-block;margin-top:9px;font-size:10px;letter-spacing:2px;
-    padding:3px 7px;border-radius:3px;text-transform:uppercase}
-  .no{background:#2a1416;color:#ff8b7a}
-  .yes{background:#14260f;color:#a7e07a}
+  body{background:#0E0D12;color:#EDE9E0;min-height:100%;
+    font-family:"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;
+    padding:clamp(20px,4vw,56px)}
+  header{max-width:1280px;margin:0 auto clamp(20px,3vw,36px)}
+  h1{font-size:clamp(22px,3vw,34px);letter-spacing:.14em;font-weight:800}
+  header p{margin-top:12px;color:#9A968E;font-size:15px;max-width:68ch;line-height:1.6}
+  header p b{color:#EDE9E0;font-weight:600}
+  h3{max-width:1280px;margin:clamp(28px,4vw,48px) auto clamp(12px,2vw,18px);font-size:11px;letter-spacing:.3em;
+    color:#77737C;text-transform:uppercase}
+  .grid{max-width:1280px;margin:0 auto;display:grid;gap:clamp(16px,2vw,28px);
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr))}
+  .grid.one{grid-template-columns:minmax(0,1fr)}
+  a.card{display:block;text-decoration:none;color:inherit;background:#17161C;border:1px solid #26252D;
+    transition:border-color .2s,transform .2s}
+  a.card:hover{border-color:#5A5866;transform:translateY(-3px)}
+  .shot{position:relative;aspect-ratio:16/10;overflow:hidden;background:#000}
+  .shot iframe{position:absolute;left:0;top:0;width:1280px;height:800px;border:0;
+    transform-origin:0 0;pointer-events:none}
+  .body{padding:16px 18px 20px}
+  .n{font-size:11px;letter-spacing:.2em;color:#77737C}
+  h2{font-size:19px;margin:6px 0 8px;letter-spacing:.02em}
+  .body p{font-size:14px;color:#9A968E;line-height:1.55;max-width:80ch}
+  .tag{display:inline-block;margin-top:11px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    padding:4px 8px;background:#24232B;color:#C9C5BC}
+  .yes{background:#14260F;color:#A7E07A}
+  .no{background:#2A1416;color:#FF8B7A}
+  .out{opacity:.45}
+  .out:hover{opacity:.8}
+  footer{max-width:1280px;margin:clamp(20px,3vw,34px) auto 0;color:#77737C;font-size:13px;line-height:1.6}
+  kbd{font:inherit;background:#24232B;color:#C9C5BC;padding:1px 6px}
 </style>
 </head>
 <body>
   <header>
     <h1>RADIO CHANGE</h1>
-    <p>Round six, built to spec from the interrogation: aggressively pasted collage, ransom-note
-       wordmark, huge type, one PLAY stamp, tall volume fader, analyser plus real EQ. Off air the page
-       is an under-inked photocopy — pressing play floods it.</p>
+    <p>No paper and no texture: <b>the live signal draws the page.</b>
+       Round eleven puts the three pieces that landed in round ten onto one page. Everything runs on the real stream.</p>
   </header>
 
-  <h3>Round 9 — the real one</h3>
-  <div class="grid">
+  <h3>Round 11: the three that landed, together</h3>
+  <div class="grid one">
     <a class="card" href="radio-change.html">
-      <div class="swatch s16"></div>
+      <div class="shot"><iframe src="radio-change.html" loading="lazy" tabindex="-1" title="Radio Change preview"></iframe></div>
       <div class="body"><div class="n">RC</div><h2>Radio Change</h2>
-      <p>The actual interface. One page, two states: off air it is an under-inked
-         photocopy; pressing play floods it with ink. Real Web Audio chain — play/stop,
-         tall volume fader, 10-band EQ with presets, audio-reactive wordmark and scope.
-         Live on the real stream, NOW PLAYING polled straight off the Shoutcast server.</p></div>
+        <p>Opens straight on the song that is playing and goes on air by itself; there is no play button, only mute.
+           Liquid is the ground, Billboard sets the artist and title edge to edge, and the field is ten columns lit
+           to each band's level, with one more behind the volume for the level going out. Presets sit in the footer;
+           Custom EQ settles the liquid into ten flat bars, the test card's way: each bar is its own slider, with one line across it. Cover for each song with the last songs played under
+           it, and an upright volume fader the mouse wheel moves.</p>
+        <span class="tag">Auto on air · mute · cover art · just played · presets · custom EQ · vertical volume</span></div>
     </a>
   </div>
 
-  <h3>Round 8 — a real player</h3>
+  <h3>Round 10: a new approach</h3>
   <div class="grid">
-    <a class="card" href="15-webamp.html">
-      <div class="swatch s15"></div>
-      <div class="body"><div class="n">15</div><h2>Webamp</h2>
-      <p>Winamp 2 reimplemented for the browser, running inside the zine environment. Real audio,
-         real 10-band EQ, real transport. Default skin is a placeholder — the custom skin is the design job.</p></div>
+    <a class="card" href="01-billboard.html">
+      <div class="shot"><iframe src="01-billboard.html" loading="lazy" tabindex="-1" title="Billboard preview"></iframe></div>
+      <div class="body"><div class="n">01</div><h2>Billboard</h2>
+        <p>The song is the page. Artist and title are set edge to edge by stretching the letterforms,
+           each line is a level meter, and every track gets its own colours.</p>
+        <span class="tag yes">Kept: the type that stretches to any length</span></div>
+    </a>
+    <a class="card" href="03-testcard.html">
+      <div class="shot"><iframe src="03-testcard.html" loading="lazy" tabindex="-1" title="Test Card preview"></iframe></div>
+      <div class="body"><div class="n">03</div><h2>Test Card</h2>
+        <p>Off air it is the broadcast colour bars. On air the same ten bars are the spectrum,
+           and dragging one boosts or cuts that band. The centre circle is PLAY, then a scope.</p>
+        <span class="tag yes">Kept: the EQ you drag, and the presets</span></div>
+    </a>
+    <a class="card" href="04-liquid.html">
+      <div class="shot"><iframe src="04-liquid.html" loading="lazy" tabindex="-1" title="Liquid preview"></iframe></div>
+      <div class="body"><div class="n">04</div><h2>Liquid</h2>
+        <p>A light show in flat colour: big fluid shapes with hard edges, no blur. Three dusk colours off air;
+           on air the full palette blooms out of the PLAY drop and the bass churns it.</p>
+        <span class="tag yes">Kept: the animation</span></div>
+    </a>
+    <a class="card out" href="02-signal.html">
+      <div class="shot"><iframe src="02-signal.html" loading="lazy" tabindex="-1" title="Signal preview"></iframe></div>
+      <div class="body"><div class="n">02</div><h2>Signal</h2>
+        <p>PLAY is the transmitter. Every kick and snare sends out a new ring of colour.</p>
+        <span class="tag no">Out: the rings are nauseating</span></div>
     </a>
   </div>
 
-  <h3>Round 7 — maximalist</h3>
-  <div class="grid">
-    <a class="card" href="14-maximal.html">
-      <div class="swatch s14"></div>
-      <div class="body"><div class="n">14</div><h2>Maximal</h2>
-      <p>54 pieces instead of 20. Ink fields, newsprint scraps, extra halftone cut-outs, repeated-name
-         tickers, stickers, hand-drawn arrows and scribbles, marginalia. Only the letters react to the cursor.</p></div>
-    </a>
-  </div>
+  <footer>
+    On any page: <kbd>Space</kbd> plays and stops, <kbd>↑</kbd> <kbd>↓</kbd> change the volume.
+    Add <kbd>?demo</kbd> to a page's address for a built-in test signal with rotating titles,
+    or <kbd>?skiptest</kbd> to Radio Change to keep the real stream but change the song every 5 seconds.
+  </footer>
 
-  <h3>Round 6 — too stark</h3>
-  <div class="grid">
-    <a class="card" href="13-cutup.html">
-      <div class="swatch s13"></div>
-      <div class="body"><div class="n">13</div><h2>Cut-up</h2>
-      <p>Ransom-note letters on scraps and knocked out of ink blocks, 10–20° rotations, heavy overlap,
-         tape, staples, fold crease, crop marks, copier grime. Scraps shy away from the cursor.</p></div>
-    </a>
-  </div>
-
-  <h3>Round 5 — too tidy, too gridded</h3>
-  <div class="grid">
-    <a class="card" href="12-zineplayer.html">
-      <div class="swatch s12"></div>
-      <div class="body"><div class="n">12</div><h2>Zine Player</h2>
-      <p>Poster-scale wordmark, stamped PLAY with ink bleed, pasted halftone artwork, the playlist as a
-         setlist with played tracks struck through, now-playing on a taped label.</p></div>
-    </a>
-  </div>
-
-  <h3>Round 4 — app furniture took over</h3>
-  <div class="grid">
-    <a class="card" href="10-player.html">
-      <div class="swatch s10"></div>
-      <div class="body"><div class="n">10</div><h2>Player</h2>
-      <p>Single-column player app. App bar, halftone art tile, giant cut-paper PLAY, volume slider,
-         just-played list, bottom tab bar. Mobile-shaped.</p></div>
-    </a>
-    <a class="card" href="11-station.html">
-      <div class="swatch s11"></div>
-      <div class="body"><div class="n">11</div><h2>Station</h2>
-      <p>Desktop station app. Left nav rail with stamped tabs, halftone stage with PLAY overlaid,
-         just-played column, persistent player bar.</p></div>
-    </a>
-  </div>
-
-  <h3>Round 3 — too editorial</h3>
-  <div class="grid">
-    <a class="card" href="08-cover.html">
-      <div class="swatch s8"></div>
-      <div class="body"><div class="n">08</div><h2>Cover</h2>
-      <p>Kerrang/NME register. Condensed-sans masthead printed twice off-register, cover-line rail,
-         duotone halftone image well, and PLAY as the circular cover flash.</p></div>
-    </a>
-    <a class="card" href="09-feature.html">
-      <div class="swatch s9"></div>
-      <div class="body"><div class="n">09</div><h2>Feature</h2>
-      <p>Rolling Stone/Mojo register. High-contrast serif, roman over italic, drop cap,
-         running head and folio. Quieter, more grown-up, same riso inks.</p></div>
-    </a>
-  </div>
-
-  <h3>Round 2 — the lane</h3>
-  <div class="grid">
-    <a class="card" href="05-riso.html">
-      <div class="swatch s5"></div>
-      <div class="body"><div class="n">05</div><h2>Riso</h2>
-      <p>Risograph overprint. Three fluoro inks on newsprint, multiply blending, misregistration that drifts. Closest evolution of the Zine.</p></div>
-    </a>
-    <a class="card" href="06-psych.html">
-      <div class="swatch s6"></div>
-      <div class="body"><div class="n">06</div><h2>Psych</h2>
-      <p>Fillmore-era gig poster. Rotating sunburst, type arced around a ring, vibrating complementary colours. Loudest option.</p></div>
-    </a>
-    <a class="card" href="07-blocks.html">
-      <div class="swatch s7"></div>
-      <div class="body"><div class="n">07</div><h2>Blocks</h2>
-      <p>Brutalist colour blocks on black. Hard-edged grid, huge condensed type, a full-width PLAY slab that cycles colour on air.</p></div>
-    </a>
-  </div>
-
-  <h3>Round 1 — archive</h3>
-  <div class="grid">
-    <a class="card" href="03-zine.html">
-      <div class="swatch s3"></div>
-      <div class="body"><div class="n">03</div><h2>Zine</h2>
-      <p>Punk photocopy print. The one that landed — round two builds on this.</p>
-      <span class="verdict yes">Liked</span></div>
-    </a>
-    <a class="card out" href="01-amp.html">
-      <div class="swatch s1"></div>
-      <div class="body"><div class="n">01</div><h2>Amp</h2>
-      <p>Guitar amp head.</p><span class="verdict no">Gimmicky</span></div>
-    </a>
-    <a class="card out" href="02-deck.html">
-      <div class="swatch s2"></div>
-      <div class="body"><div class="n">02</div><h2>Deck</h2>
-      <p>Cassette deck.</p><span class="verdict no">Gimmicky</span></div>
-    </a>
-    <a class="card out" href="04-scope.html">
-      <div class="swatch s4"></div>
-      <div class="body"><div class="n">04</div><h2>Scope</h2>
-      <p>Phosphor oscilloscope.</p><span class="verdict no">Monochrome</span></div>
-    </a>
-  </div>
+<script>
+/* scale each 1280x800 preview down to its card */
+const ro=new ResizeObserver(es=>es.forEach(e=>{
+  e.target.firstElementChild.style.transform="scale("+e.contentRect.width/1280+")";
+}));
+document.querySelectorAll(".shot").forEach(s=>ro.observe(s));
+</script>
 </body>
 </html>

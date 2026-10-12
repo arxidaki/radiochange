@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en" data-air="off">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radio Change: Signal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#17102E;--cream:#F7F0E0;--red:#FF3B1D;--amber:#FFC21A;--cobalt:#1437E0;
+    --d:clamp(150px,30vmin,320px);
+    --ease:cubic-bezier(.7,0,.15,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--cream);color:var(--cream);height:100dvh;overflow:hidden;
+    font-family:"Bricolage Grotesque",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+  /* ---------- the transmitter ---------- */
+  #play{
+    position:fixed;z-index:4;left:50%;top:50%;width:var(--d);height:var(--d);
+    margin:calc(var(--d)/-2) 0 0 calc(var(--d)/-2);
+    border:0;border-radius:50%;cursor:pointer;background:var(--red);color:var(--cream);
+    display:grid;place-items:center;transform:scale(var(--k,1));
+    transition:background-color .5s var(--ease);
+  }
+  [data-air=on] #play{background:var(--ink)}
+  #play svg{grid-area:1/1;width:40%;height:40%;fill:currentColor;transition:opacity .2s,transform .3s var(--ease)}
+  #play:hover svg{transform:scale(1.1)}
+  #play .i-stop,#play .i-dial{opacity:0}
+  [data-air=on] #play .i-play,[data-air=dialing] #play .i-play{opacity:0}
+  [data-air=on] #play .i-stop{opacity:1}
+  [data-air=dialing] #play .i-dial{opacity:1;animation:blink .35s steps(2,jump-none) infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  /* ---------- corner tabs: the only text on the page ---------- */
+  .tab{position:fixed;z-index:3;background:var(--ink);color:var(--cream);
+    padding:clamp(10px,1.3vw,18px) clamp(14px,1.7vw,24px)}
+  .tl{left:0;top:0}.tr{right:0;top:0}.bl{left:0;bottom:0}.br{right:0;bottom:0}
+  .wm{font-weight:800;font-stretch:88%;font-size:clamp(20px,2.3vw,34px);letter-spacing:-.01em;
+    text-transform:uppercase;line-height:1}
+  .st{display:flex;align-items:center;gap:.6em;font-weight:700;font-size:clamp(11px,1vw,14px);
+    letter-spacing:.16em;text-transform:uppercase}
+  .st i{width:.8em;height:.8em;border-radius:50%;background:var(--cream);opacity:.35}
+  [data-air=on] .st i{background:var(--red);opacity:1}
+  [data-air=dialing] .st i{opacity:1;animation:blink .35s steps(2,jump-none) infinite}
+  .bl{max-width:min(72vw,56ch)}
+  .lab{display:block;font-weight:700;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-bottom:.45em}
+  #artist{display:block;font-weight:800;font-size:clamp(17px,1.9vw,28px);line-height:1.05;letter-spacing:-.01em}
+  #title{display:block;font-weight:400;font-size:clamp(15px,1.5vw,22px);line-height:1.15;margin-top:.15em}
+  .br{display:flex;align-items:center;gap:14px}
+  .br .lab{margin:0}
+  .vol{position:relative;width:clamp(100px,11vw,160px);height:34px;cursor:ew-resize;touch-action:none}
+  .vol::before,.vol i{content:"";position:absolute;left:0;top:50%;height:8px;margin-top:-4px;border-radius:4px}
+  .vol::before{right:0;background:rgba(247,240,224,.25)}
+  .vol i{width:calc(var(--v,.8)*100%);background:var(--cream)}
+  .vol b{position:absolute;top:50%;left:calc(var(--v,.8)*100%);width:20px;height:20px;margin:-10px 0 0 -10px;
+    border-radius:50%;background:var(--amber)}
+
+  #err{position:fixed;z-index:9;left:50%;top:18px;transform:translateX(-50%);display:none;
+    background:var(--amber);color:var(--ink);padding:.7em 1em;font-weight:800;font-size:12px;letter-spacing:.1em}
+  @media (max-width:640px){.br .lab{display:none}}
+</style>
+</head>
+<body>
+  <canvas id="c" aria-hidden="true"></canvas>
+
+  <div class="tab tl"><b class="wm">Radio Change</b></div>
+  <div class="tab tr"><span class="st"><i></i><span id="st">Off air</span></span></div>
+  <div class="tab bl" aria-live="polite">
+    <span class="lab" id="npLab">On now</span>
+    <span id="artist">&nbsp;</span>
+    <span id="title"></span>
+  </div>
+  <div class="tab br">
+    <span class="lab">Vol</span>
+    <div class="vol" id="vol" role="slider" aria-label="Volume" aria-valuemin="0" aria-valuemax="100"><i></i><b></b></div>
+  </div>
+
+  <button id="play" aria-label="Play Radio Change">
+    <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 3.5 L21.5 12 L7.5 20.5 Z"/></svg>
+    <svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14"/></svg>
+    <svg class="i-dial" viewBox="0 0 24 24" aria-hidden="true"><circle cx="4" cy="12" r="2.6"/><circle cx="12" cy="12" r="2.6"/><circle cx="20" cy="12" r="2.6"/></svg>
+  </button>
+  <div id="err" role="alert"></div>
+
+<script src="engine.js"></script>
+<script>
+/* =====================================================================
+   SIGNAL: PLAY is the transmitter.
+   Every kick and snare sends a new ring of colour out from it, so the
+   width of each band is the gap between two hits: the rhythm, drawn
+   like tree rings. Off air it idles as a plain two-colour target.
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const cv=$("#c"),g=cv.getContext("2d"),play=$("#play");
+
+const LIVE=["#17102E","#FF3B1D","#FFC21A","#1437E0","#F7F0E0","#FF6FB0","#0FA36B"];
+const CALM=["#F7F0E0","#1437E0"];
+
+let W=0,H=0,dpr=1,cx=0,cy=0,maxR=1,r0=80;
+let fronts=[];       // {r,c}: everything inside r is colour c. Largest first.
+let li=0,ci=0,sinceEmit=0,energy=0,kick=0,last=performance.now();
+
+function size(){
+  dpr=Math.min(2,devicePixelRatio||1);
+  W=cv.clientWidth;H=cv.clientHeight;
+  cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+  cx=W/2;cy=H/2;
+  maxR=Math.hypot(W/2,H/2)+2;
+  r0=play.offsetWidth/2-3;
+  seed();
+}
+function calmGap(){return Math.max(34,maxR*.085);}
+function seed(){
+  fronts=[];
+  let i=0;
+  for(let r=maxR+calmGap();r>r0-calmGap();r-=calmGap())fronts.push({r:r,c:CALM[i++&1]});
+  ci=i&1;
+}
+function emit(c){fronts.push({r:r0,c:c});sinceEmit=0;}
+
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  const s=radio.sample();
+  energy+=((s.on?1:0)-energy)*Math.min(1,dt*2.5);
+
+  /* everything travels outward; louder is faster */
+  const speed=maxR*(.028+energy*(.085+s.level*.15));
+  for(const f of fronts)f.r+=speed*dt;
+  sinceEmit+=dt;
+
+  const gap=fronts.length?fronts[fronts.length-1].r-r0:1e9;
+  if(s.on){
+    if(((s.beat||s.snare)&&gap>10)||sinceEmit>1.15){li=(li+1)%LIVE.length;emit(LIVE[li]);}
+  }else if(gap>=calmGap()){
+    ci^=1;emit(CALM[ci]);
+  }
+  while(fronts.length>1&&fronts[1].r>=maxR)fronts.shift();
+
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.fillStyle=fronts[0].c;g.fillRect(0,0,W,H);
+  for(let i=1;i<fronts.length;i++){
+    g.beginPath();g.arc(cx,cy,fronts[i].r,0,6.2832);
+    g.fillStyle=fronts[i].c;g.fill();
+  }
+
+  kick=s.beat?1:kick*Math.exp(-dt*9);
+  play.style.setProperty("--k",(1+(s.on?kick*.07:0)).toFixed(3));
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- wiring ---------------- */
+function paintTrack(){
+  const t=radio.track;
+  $("#npLab").textContent=radio.state==="on"?"Now playing":"On now";
+  $("#artist").textContent=t?(t.artist||t.title):"Rock, 24 hours, no ads";
+  $("#title").textContent=t&&t.artist?t.title:"";
+}
+radio.on("state",s=>{
+  $("#st").textContent=s==="on"?"On air":s==="dialing"?"Dialing":"Off air";
+  play.setAttribute("aria-label",s==="off"?"Play Radio Change":"Stop");
+  paintTrack();
+});
+radio.on("track",paintTrack);paintTrack();
+radio.on("error",msg=>{
+  const e=$("#err");e.textContent=msg;e.style.display="block";
+  clearTimeout(e.t);e.t=setTimeout(()=>{e.style.display="none";},6000);
+});
+play.addEventListener("click",()=>radio.toggle());
+
+const volEl=$("#vol");
+function paintVol(v){volEl.style.setProperty("--v",v.toFixed(3));volEl.setAttribute("aria-valuenow",Math.round(v*100));}
+radio.on("volume",paintVol);paintVol(radio.volume);
+volEl.addEventListener("pointerdown",e=>{
+  volEl.setPointerCapture(e.pointerId);
+  const at=ev=>{const r=volEl.getBoundingClientRect();radio.setVolume((ev.clientX-r.left)/r.width);};
+  at(e);
+  const up=()=>{volEl.removeEventListener("pointermove",at);volEl.removeEventListener("pointerup",up);};
+  volEl.addEventListener("pointermove",at);volEl.addEventListener("pointerup",up);
+});
+
+new ResizeObserver(size).observe(cv);
+size();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
