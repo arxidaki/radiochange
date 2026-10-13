@@ -1366,9 +1366,16 @@ function openAct(song,x,y,row){
   const cp=actEl.querySelector("[data-do=copy]");
   cp.textContent="Copy";cp.classList.remove("done");
   actFor=song;actEl.hidden=false;
-  /* the picture: the tile at once, the sleeve over it as soon as it is in */
-  actArt.replaceChildren(...makeFace(song.text,Array.from(song.artist||song.title)[0],null).childNodes);
-  radio.art(song.text,300,u=>{
+  /* The picture: the one the page is showing for this song already, copied, so
+     it is there at once and nothing is asked for twice. That is its row's, or
+     the cover's, at rest or being turned to. Only a song with no picture up yet
+     gets the tile, and the sleeve over it as soon as it is in. */
+  const key=song.text+"|";
+  const here=row?row.querySelector(".th img")
+    :shownId.startsWith(key)?faceNow.querySelector("img")
+    :turn&&turn.id.startsWith(key)?turn.back.querySelector("img"):null;
+  actArt.replaceChildren(...makeFace(song.text,Array.from(song.artist||song.title)[0],here&&here.cloneNode()).childNodes);
+  if(!here)radio.art(song.text,300,u=>{
     if(!u||actFor!==song)return;
     loadCover(u,im=>{if(actFor===song)actArt.append(im);});
   });
