@@ -1556,14 +1556,15 @@ function frame(now){
   const s=radio.sample();
   onAmt+=((s.on?1:0)-onAmt)*Math.min(1,dt*1.6);
   deskAmt+=((document.body.classList.contains("desk")?1:0)-deskAmt)*Math.min(1,dt*7);
-  bass+=(s.bass-bass)*.25;treb+=(s.treble-treb)*.3;
-  T+=dt*(.035+onAmt*(.03+s.level*.3));
-
-  /* Every column shows what is going out, not what came in: the fader raises
-     and lowers them all, and at nothing (which is mute) they lie flat. The
-     ear's way, not the ruler's: by halfway up the fader they stand all but as
-     tall as they can, and most of the fall comes in the bottom third. */
+  /* The page shows what is going out, not what came in, and `loud` is how much
+     of it the fader lets through. The ear's way, not the ruler's: by halfway
+     up the fader it is all but everything, and most of the fall comes in the
+     bottom third. At nothing (which is mute) the field stops shaking with the
+     music and only drifts, as it does off air, and the columns lie flat. */
   const loud=1-Math.pow(1-radio.volume,4);
+  bass+=(s.bass*loud-bass)*.25;treb+=(s.treble*loud-treb)*.3;
+  T+=dt*(.035+onAmt*loud*(.03+s.level*.3));
+
   for(let i=0;i<NB;i++){
     let tgt=1,k=dt*4;                                      // no signal: every column fully lit
     if(s.on){tgt=Math.max(.02,Math.min(1,s.bands[i]*1.22))*loud;k=dt*(tgt>levels[i]?36:13);}
