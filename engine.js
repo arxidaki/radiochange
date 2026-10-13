@@ -452,8 +452,8 @@ function poll(){
    remembered too, so nothing is looked up twice. */
 let artStore={};
 try{
-  ["radiochange.art","radiochange.art2","radiochange.art3","radiochange.art4","radiochange.art5","radiochange.art6","radiochange.art7","radiochange.art8"].forEach(k=>localStorage.removeItem(k));   // older caches
-  artStore=JSON.parse(localStorage.getItem("radiochange.art9")||"{}")||{};
+  ["radiochange.art","radiochange.art2","radiochange.art3","radiochange.art4","radiochange.art5","radiochange.art6","radiochange.art7","radiochange.art8","radiochange.art9"].forEach(k=>localStorage.removeItem(k));   // older caches
+  artStore=JSON.parse(localStorage.getItem("radiochange.art10")||"{}")||{};
 }catch(e){}
 const artWait={};
 let artQueue=Promise.resolve();
@@ -466,6 +466,17 @@ const flat=x=>norm(x||"").replace(/ /g,"");
 const bare=x=>(x||"").replace(/\s*[\(\[][^\)\]]*[\)\]]/g,"").trim();
 /* a name without a leading "The", for telling acts apart */
 const nameKey=x=>flat(x).replace(/^the/,"");
+/* A name with its number words as figures, up to ninety-nine. The tag says
+   "Three Doors Down" and the catalogues "3 Doors Down", or the other way about
+   with Matchbox Twenty: a name is compared as written, and then like this. */
+const NUMS={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,
+            thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,
+            twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+const NUM_WORD=new RegExp("\\b("+Object.keys(NUMS).join("|")+")\\b","gi");
+const NUM_PAIR=/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[\s-]+(one|two|three|four|five|six|seven|eight|nine)\b/gi;
+const figures=x=>(x||"").replace(NUM_PAIR,(m,t,u)=>NUMS[t.toLowerCase()]+NUMS[u.toLowerCase()])
+                        .replace(NUM_WORD,m=>NUMS[m.toLowerCase()]);
+const either=(same,a,b)=>same(a,b)||same(figures(a),figures(b));
 /* How many single-letter slips (one wrong, one missing or one extra) separate two names. */
 function slips(a,b){
   let row=[];
@@ -508,7 +519,7 @@ function sameSong(title,theirs){
 }
 /* both have to hold: the act and the song */
 function agrees(artist,title,theirArtist,theirTitle){
-  return sameAct(artist,theirArtist||"")&&sameSong(title,theirTitle||"");
+  return either(sameAct,artist,theirArtist||"")&&either(sameSong,title,theirTitle||"");
 }
 function jsonp(url){
   return new Promise(res=>{
@@ -551,7 +562,7 @@ async function findArtist(artist,lead){
   const picture=x=>x.picture_big&&!/\/artist\/\//.test(x.picture_big)?x.picture_big:"";   // an empty slot there means no picture
   const byFans=(x,y)=>(y.nb_fan||0)-(x.nb_fan||0);
   const list=(r.data||[]).filter(x=>x&&x.name);
-  const same=list.filter(x=>nameKey(x.name)===a).sort(byFans)[0];
+  const same=list.filter(x=>either((p,q)=>nameKey(p)===nameKey(q),artist,x.name)).sort(byFans)[0];
   if(lead)return same&&(same.nb_fan||0)>=5000?{name:same.name,picture:picture(same),guessed:true}:"";
   if(same)return {name:same.name,picture:picture(same),guessed:false};
   /* A guess has to earn it: a name long enough to judge, at most one slip per
@@ -635,7 +646,7 @@ function art(text,size,fn){
         artStore[text]=r.u;
         const keys=Object.keys(artStore);
         if(keys.length>80)delete artStore[keys[0]];
-        try{localStorage.setItem("radiochange.art9",JSON.stringify(artStore));}catch(e){}
+        try{localStorage.setItem("radiochange.art10",JSON.stringify(artStore));}catch(e){}
       }
       return r.u;
     });
