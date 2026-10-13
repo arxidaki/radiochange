@@ -359,6 +359,8 @@ function tidy(raw){
     const a=parts[0].toLowerCase(),b=parts[1].replace(/^\d{1,3}[\s.\-]+/,"").toLowerCase();
     if(a===b)parts.splice(1,1);
   }
+  /* "Killers, The": filed under K, but the name is The Killers */
+  if(parts.length>1)parts[0]=parts[0].replace(/^(.+),\s*(the|a|an)$/i,"$2 $1");
   return parts.join(" - ");
 }
 function split(text){
