@@ -62,18 +62,19 @@
   @keyframes blink{50%{opacity:.25}}
 
   /* ---------- the vibe: a slider through the page's colours ----------
-     The run is one cell to a vibe, each showing three of its colours, the
-     brightest vibe on the left and the darkest on the right. The knob always
-     comes to rest in the middle of a cell. */
-  #vibe{display:flex;align-items:center;gap:1.1em;padding:5px 8px 5px 1.4em;margin:0 auto 0 clamp(12px,2vw,28px);
+     A plain rail with a notch for every vibe, the brightest on the left and
+     the blackest on the right. It shows no colours of its own: the page does
+     that. The knob always comes to rest on a notch. */
+  #vibe{display:flex;align-items:center;gap:.6em;padding:5px 8px 5px 1.4em;margin:0 auto 0 clamp(12px,2vw,28px);
     cursor:ew-resize;touch-action:none;outline:0}
   #vibe:focus-visible{box-shadow:0 0 0 2px var(--amber)}
-  #vibe .run{position:relative;display:flex;gap:2px;width:clamp(150px,18vw,240px);height:20px}
-  #vibe .run i{flex:1;border-radius:3px;background:linear-gradient(90deg,var(--a) 33.4%,var(--b) 0 66.7%,var(--c) 0)}
-  #vibe .run i:first-child{border-radius:10px 3px 3px 10px}
-  #vibe .run i:last-of-type{border-radius:3px 10px 10px 3px}
-  #vibe .run b{position:absolute;top:50%;left:calc((var(--x,0) + .5)/var(--n,1)*100%);width:22px;height:22px;margin:-11px 0 0 -11px;
-    border-radius:50%;background:var(--cream);box-shadow:0 0 0 3px var(--ink);transition:left .22s cubic-bezier(.3,.7,.3,1)}
+  #vibe .run{position:relative;width:clamp(170px,20vw,260px);height:20px}
+  /* the notches, and the line from the first of them to the last */
+  #vibe .run::before{content:"";position:absolute;left:0;right:0;top:50%;height:6px;margin-top:-3px;opacity:.45;
+    background:radial-gradient(circle closest-side,var(--cream) 99%,transparent) 0 0/calc(100%/var(--n,1)) 100%,
+      linear-gradient(var(--cream),var(--cream)) center/calc(100% - 100%/var(--n,1)) 2px no-repeat}
+  #vibe .run b{position:absolute;top:50%;left:calc((var(--x,0) + .5)/var(--n,1)*100%);width:18px;height:18px;margin:-9px 0 0 -9px;
+    border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px var(--ink);transition:left .22s cubic-bezier(.3,.7,.3,1)}
   #vibe.drag .run b{transition:none}             /* a drag stays under the finger */
 
   /* ---------- the song: every line set edge to edge ---------- */
@@ -361,45 +362,69 @@ radio.keepAlive=true;               // no play button here, so a lost signal red
 /* ================= the vibe =================
    Everything coloured on the page comes from one of these. The slider in the
    header runs through them in this order: the brightest first, then the warm
-   ones, then the dark. CHANGE is the station's own, and where a first visit
-   starts.
+   ones, then the dark, and the blackest last. CHANGE is the station's own, and
+   where a first visit starts.
      hot    the field's seven colours when sound is running (ink is the eighth)
      dusk   the three it falls back to when there is none
      bar    the equaliser's ten bars, bass to treble
-     chip   the three that stand for it on the slider
      tiles  stand-ins for a missing cover: made from hot where none are given */
 const VIBES=[
   /* paint on a wall: lemon, tangerine and coral against raspberry and purple, and a splash of teal */
   {id:"pop",name:"Pop",ink:"#2A1422",cream:"#FFF4D8",amber:"#FBD23B",live:"#F4553F",
     hot:["#F4553F","#F88B2A","#FBD23B","#E0317A","#9A45B0","#5B3A9E","#35BDB4"],
     dusk:["#5A2D82","#B52E63","#2A8F8C"],
-    bar:["#FBD23B","#F9AE32","#F88B2A","#F66F35","#F4553F","#E0317A","#BC3A92","#9A45B0","#5B3A9E","#35BDB4"],
-    chip:["#FBD23B","#E0317A","#35BDB4"]},
+    bar:["#FBD23B","#F9AE32","#F88B2A","#F66F35","#F4553F","#E0317A","#BC3A92","#9A45B0","#5B3A9E","#35BDB4"]},
+  /* a punk sleeve: acid yellow and hot pink on black, cut with cyan */
+  {id:"punk",name:"Punk",ink:"#170A1C",cream:"#FFF6DC",amber:"#FFE500",live:"#F4212E",
+    hot:["#FF2E88","#FFE500","#00C2E0","#FF5FA8","#F4212E","#FFB800","#B5108C"],
+    dusk:["#7D0F4E","#C21668","#0E6E82"],
+    bar:["#FFE500","#FFC800","#FFA000","#FF6A00","#F4212E","#FF2E88","#E0189A","#B5108C","#5A1FC0","#00C2E0"]},
   {id:"change",name:"Change",ink:"#1C0836",cream:"#FFF3DC",amber:"#FFC93C",live:"#FF4A3A",
     hot:["#FF3B2E","#FF8A1E","#FFC93C","#E81E8C","#6A1FE0","#1230C8","#00A896"],
     dusk:["#2A1AA0","#B0126F","#4A1CB8"],
     bar:["#FF8A1E","#FF6A1F","#FF3B2E","#F0286A","#E81E8C","#B01FC0","#6A1FE0","#1E36D6","#0B7BD6","#00A896"],
-    chip:["#FF8A1E","#E81E8C","#1230C8"],
     tiles:[["#FF4A1C","#1A1247"],["#FFD21F","#17110F"],["#00A870","#0E1F3D"],["#FF6FAE","#2A0F6B"],
            ["#5B2BE0","#FFE9C9"],["#D8FF3E","#0F3B2C"],["#16B4F2","#2B0B3A"],["#E81E6E","#FFF3D6"]]},
   /* the station's own with the blues and the teal taken out: its warm half, and purples for the dark */
   {id:"sundown",name:"Sundown",ink:"#2B0B2E",cream:"#FFF2DC",amber:"#FFCB3D",live:"#FF5A36",
     hot:["#FF5A36","#FF9124","#FFCB3D","#F0307F","#9A2BD0","#55199A","#C2185B"],
     dusk:["#5A1A86","#C22E62","#8A1A4A"],
-    bar:["#FFA42A","#FF8A26","#FF7030","#FF5A36","#F5405C","#F0307F","#C92CA8","#9A2BD0","#7422B8","#55199A"],
-    chip:["#FF9124","#F0307F","#9A2BD0"]},
+    bar:["#FFA42A","#FF8A26","#FF7030","#FF5A36","#F5405C","#F0307F","#C92CA8","#9A2BD0","#7422B8","#55199A"]},
   /* all fire: gold through orange and vermilion to pink, plum and wine. No blue, no green */
   {id:"ember",name:"Ember",ink:"#2A0714",cream:"#FFF1DA",amber:"#FFC83A",live:"#FF5A2E",
     hot:["#FF4322","#FF8419","#FFC83A","#FF4F8B","#B3167A","#6E0F3A","#C8421A"],
     dusk:["#7A1526","#C25A12","#4A0C36"],
-    bar:["#FFA126","#FF8419","#FF6820","#FF4D22","#F03538","#EE2F62","#F03C8A","#CC2288","#A3157A","#7A1466"],
-    chip:["#FFC83A","#FF4322","#6E0F3A"]},
+    bar:["#FFA126","#FF8419","#FF6820","#FF4D22","#F03538","#EE2F62","#F03C8A","#CC2288","#A3157A","#7A1466"]},
+  /* a gig poster: red, orange and yellow on black and charcoal, and one hit of electric blue */
+  {id:"riot",name:"Riot",ink:"#150508",cream:"#FFF4E0",amber:"#FFD21A",live:"#F0162E",
+    hot:["#F0162E","#FF6A1A","#FFD21A","#C20E26","#1F4BFF","#7A0A1C","#33303A"],
+    dusk:["#5C0A16","#262430","#8A1A12"],
+    bar:["#FFD21A","#FFB01A","#FF8A1A","#FF6A1A","#F83A22","#F0162E","#C20E26","#9A0C22","#5A1A8C","#1F4BFF"]},
+  /* the lights over a stage: magenta, electric blue, cyan and violet out of the black. Lime is kept for the knobs */
+  {id:"voltage",name:"Voltage",ink:"#07061A",cream:"#F8F3EC",amber:"#C8FF2E",live:"#FF3D5A",
+    hot:["#FF2BD6","#3D5BFF","#00B8E6","#8A2BFF","#1B1FA8","#FF3D5A","#5A16C8"],
+    dusk:["#1A1C7A","#5A1290","#0A4A6A"],
+    bar:["#00B8E6","#1EA0F5","#2E7DFF","#3D5BFF","#5F3DFF","#8A2BFF","#B02BEF","#D82BE0","#FF2BD6","#FF3D5A"]},
   /* after hours: crimson, wine and deep violet down to midnight, and one glow of gold */
   {id:"night",name:"Night",ink:"#0C0616",cream:"#F6EBDA",amber:"#E2A62E",live:"#E5432F",
     hot:["#B0182E","#D0561C","#E2A62E","#8A1552","#4A1784","#1D2173","#0F5560"],
     dusk:["#1B1550","#5C1034","#2B1158"],
-    bar:["#E2A62E","#D97F24","#D0561C","#C03524","#B0182E","#9D1640","#8A1552","#6A166B","#4A1784","#1D2173"],
-    chip:["#B0182E","#4A1784","#1D2173"]},
+    bar:["#E2A62E","#D97F24","#D0561C","#C03524","#B0182E","#9D1640","#8A1552","#6A166B","#4A1784","#1D2173"]},
+  /* blood and rust: reds from fresh to dried on black, with one streak of rust */
+  {id:"blood",name:"Blood",ink:"#0B0406",cream:"#F2E6D8",amber:"#E0862E",live:"#D4202F",
+    hot:["#8E0F1F","#D4202F","#5E0A14","#B5461C","#3A0A10","#6B1230","#2A2226"],
+    dusk:["#3A070E","#1E1719","#4A0C1E"],
+    bar:["#E0862E","#C8641F","#B5461C","#C22F22","#D4202F","#B0182A","#8E0F1F","#741024","#5E0A14","#3A0A10"]},
+  /* slow and heavy: moss, pine and petrol under a purple haze, lit by a sick green */
+  {id:"doom",name:"Doom",ink:"#070A08",cream:"#EDE9D6",amber:"#A9C92B",live:"#D4432A",
+    hot:["#2E5E2A","#7FAE1C","#1C3A2A","#4A1E66","#7A6A14","#14302E","#6A2A9A"],
+    dusk:["#14261A","#24123A","#0F2424"],
+    bar:["#A9C92B","#86AE24","#5F8F24","#3F7528","#2E5E2A","#1E4A38","#1A3A4E","#2E2466","#4A1E66","#6A2A9A"]},
+  /* lights out: charcoal, gunmetal and cold steel, and a single line of red */
+  {id:"blackout",name:"Blackout",ink:"#050507",cream:"#E9E6E2",amber:"#BFC4D4",live:"#E0263A",
+    hot:["#B3122A","#23242E","#34374A","#15161C","#4B5470","#5A0C18","#1C2238"],
+    dusk:["#191A22","#2A0A10","#1A2030"],
+    bar:["#B3122A","#8E1024","#6A0E1E","#4A1220","#34202E","#2E2A3E","#34374A","#3F465E","#4B5470","#5E6A8C"]},
 ];
 const HOME="change";
 const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
@@ -453,12 +478,6 @@ function restVibe(x){
   setVibe(Math.round(x));
   try{localStorage.setItem("radiochange.vibe",vibe.id);}catch(e){}
 }
-VIBES.forEach(v=>{
-  const cell=document.createElement("i");
-  cell.title=v.name;
-  ["a","b","c"].forEach((n,j)=>cell.style.setProperty("--"+n,v.chip[j]));
-  runEl.insertBefore(cell,runEl.lastChild);
-});
 runEl.style.setProperty("--n",VIBES.length);
 vibeEl.setAttribute("aria-valuemin",0);vibeEl.setAttribute("aria-valuemax",VIBES.length-1);
 vibeEl.addEventListener("pointerdown",e=>{
