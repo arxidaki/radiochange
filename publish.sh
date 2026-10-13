@@ -2,8 +2,8 @@
 # Publish the player to GitHub Pages.
 #
 # The site is one page: the committed mockups/radio-change.html goes out as
-# index.html on the gh-pages branch, with engine.js beside it. Nothing else in
-# the repo is published, and the working tree is not touched.
+# index.html on the gh-pages branch, with engine.js and the logo beside it.
+# Nothing else in the repo is published, and the working tree is not touched.
 #
 #   sh publish.sh            publish to origin
 #   sh publish.sh <remote>   publish to another remote
@@ -14,6 +14,7 @@ remote=${1:-origin}
 tree=$(printf '100644 blob %s\t%s\n' \
   "$(git rev-parse HEAD:mockups/radio-change.html)" index.html \
   "$(git rev-parse HEAD:mockups/engine.js)" engine.js \
+  "$(git rev-parse HEAD:mockups/radio-change-logo.png)" radio-change-logo.png \
   "$(git rev-parse HEAD:mockups/.nojekyll)" .nojekyll | git mktree)
 
 # build on what is already published, so the push is never a forced one
