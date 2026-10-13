@@ -15,6 +15,12 @@
     --gap:clamp(14px,2vw,30px);
     --bar:clamp(48px,6.6vh,60px);
     --side:clamp(190px,23vw,330px);
+    /* the cover is a square this wide, and a pill is this tall: the vibe's window is cut to both */
+    --artw:min(calc(var(--side) - 9px),38vh);
+    --vh:26px;
+    /* the top bar: two pills and the gap between them */
+    --bgap:8px;
+    --top:calc(var(--vh)*2 + var(--bgap));
     --volw:44px;
     /* the strip the volume stands in; the ten EQ bands take the rest of the width */
     --gut:calc(var(--pad) + var(--volw) + var(--gap)/2);
@@ -50,17 +56,26 @@
   .pill{background:var(--ink);border-radius:999px}
   .lab{font-weight:800;font-stretch:112%;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
 
-  header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;column-gap:10px;
-    padding-bottom:calc(var(--pad)*.5);min-height:calc(var(--pad)*.5 + 30px)}
+  /* ---------- the top bar ----------
+     The name on the left; on the right the light, and under it the vibe's
+     pill. Those two, one over the other, are how tall the bar is (--top), and
+     the song and the cover both start under it. The bar stands over the rest
+     of the page: the vibe's window hangs from it, down over the cover.
+     Three columns: the name, the song while the equaliser has the page (see
+     #np), and the pills. */
+  header{grid-column:1/-1;z-index:4;display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr) auto;
+    grid-template-rows:var(--vh) var(--vh);gap:var(--bgap) 10px;align-items:center;padding-bottom:calc(var(--pad)*.5)}
   /* The name is the station's sticker, a picture: black paint on a backing cut
-     to its shape. Its height and width are given here, so the header is the
-     same size before the picture arrives as after, and it reaches a little past
-     the row, above and below. Squeezed, it is drawn smaller. The hard shadow is
-     the one the name had as letters, made here and not in the picture, so it
-     takes the colour of the vibe on show. */
-  .wm{--h:clamp(41px,4.05vw,55px);display:flex;align-items:center;flex:none;height:var(--h);width:calc(var(--h)*685/143);
-    min-width:0;max-width:100%;margin:calc(var(--h)*-.12) 0;
-    filter:drop-shadow(calc(var(--h)*.055) calc(var(--h)*.055) 0 var(--ink))}
+     to its shape. It is as tall as the bar, from the top of the light to the
+     foot of the vibe's pill, and as wide as that makes it; its box is given
+     here, so the bar is the same before the picture arrives as after. Where
+     the bar has no room for that width, as on a phone, the sticker is as wide
+     as the room there is, and stands in the middle of the bar's height. The
+     hard shadow (--ws) is the one the name had as letters, made here and not
+     in the picture, so it takes the colour of the vibe on show. */
+  .wm{--h:var(--top);--ws:calc(var(--h)*.055);grid-area:1/1/3/2;justify-self:start;
+    display:flex;align-items:center;height:var(--h);width:calc(var(--h)*685/143);min-width:0;max-width:100%;
+    filter:drop-shadow(var(--ws) var(--ws) 0 var(--ink))}
   .foil{position:relative;width:100%;aspect-ratio:685/143;overflow:hidden;container-type:inline-size}
   .foil img{position:relative;z-index:1;display:block;width:100%;height:100%}
   .foil i{display:none}
@@ -122,28 +137,60 @@
   @keyframes sheet3{from{transform:translateX(-14cqw) skewX(-31deg)}to{transform:translateX(136cqw) skewX(-31deg)}}
   @keyframes glint{0%{transform:translateX(-75%)}55%,100%{transform:translateX(75%)}}
   @media (prefers-reduced-motion:reduce){.foil i b{animation:none}}
-  .st{display:flex;align-items:center;gap:.7em;padding:.75em 1.1em}
+  .st{grid-area:1/3;justify-self:end;display:flex;align-items:center;gap:.7em;height:var(--vh);padding:0 1.1em}
   .st i{width:.9em;height:.9em;border-radius:50%;background:var(--cream);opacity:.4}
   [data-air=on] .st i{background:var(--live);opacity:1}
   [data-air=dialing] .st i{opacity:1;animation:blink .35s steps(2,jump-none) infinite}
   body.quiet .st i{background:var(--amber);opacity:1}
   @keyframes blink{50%{opacity:.25}}
 
-  /* ---------- the vibe: a slider through the page's colours ----------
-     A plain rail with a notch for every vibe, the brightest on the left and
-     the blackest on the right. It shows no colours of its own: the page does
-     that. The knob always comes to rest on a notch. */
-  #vibe{display:flex;align-items:center;gap:.6em;padding:5px 8px 5px 1.4em;margin:0 auto 0 clamp(12px,2vw,28px);
-    cursor:ew-resize;touch-action:none;outline:0}
-  #vibe:focus-visible{box-shadow:0 0 0 2px var(--amber)}
-  #vibe .run{position:relative;width:clamp(170px,20vw,260px);height:20px}
-  /* the notches, and the line from the first of them to the last */
-  #vibe .run::before{content:"";position:absolute;left:0;right:0;top:50%;height:6px;margin-top:-3px;opacity:.45;
-    background:radial-gradient(circle closest-side,var(--cream) 99%,transparent) 0 0/calc(100%/var(--n,1)) 100%,
-      linear-gradient(var(--cream),var(--cream)) center/calc(100% - 100%/var(--n,1)) 2px no-repeat}
-  #vibe .run b{position:absolute;top:50%;left:calc((var(--x,0) + .5)/var(--n,1)*100%);width:18px;height:18px;margin:-9px 0 0 -9px;
-    border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px var(--ink);transition:left .22s cubic-bezier(.3,.7,.3,1)}
-  #vibe.drag .run b{transition:none}             /* a drag stays under the finger */
+  /* ---------- the vibe: a pill, and the window it opens into ----------
+     In the top bar, under the light and over the cover's top right corner, a
+     pill: a sun, "Vibe check", a moon. The vibes run that way, the brightest
+     first and the darkest last. With the pointer on it, or at a press or a
+     tap, the pill grows into a window that covers the cover: its left edge
+     runs out to the cover's and its foot drops to the cover's, shadow and all.
+     In the window are the nine vibes, three by three, each a tile: its
+     colours, and under them the act it is named after.
+     Where the cover is small the window is bigger than it, to the left and
+     below, so that a name can still be read.
+     #vibe is the pill's place in the bar and takes no pointer of its own. --pw
+     is how wide the pill is at rest (see sizeVibe, in the script), and --ww
+     and --wh how wide and how tall the window is. The window is there all
+     along, cut down to the pill. */
+  #vibe{--ww:max(var(--side),280px);--wh:max(calc(var(--vh) + var(--pad)*.5 + var(--artw) + 8px),250px);
+    grid-area:2/3;justify-self:end;position:relative;width:var(--pw,155px);height:var(--vh);transition:opacity .25s}
+  /* open, the whole of the window's box holds the pointer, however much of it has been uncovered so far */
+  #vibe.open::before{content:"";position:absolute;right:0;top:0;width:var(--ww);height:var(--wh);pointer-events:auto}
+  #vibeBtn{position:absolute;z-index:1;right:0;top:0;width:100%;height:100%;
+    display:flex;align-items:center;justify-content:space-between;gap:.7em;padding:0 1em;border:0;
+    font-family:inherit;color:var(--cream);white-space:nowrap;cursor:pointer;outline:0;
+    transition:width .2s cubic-bezier(.5,0,.8,.4)}
+  #vibeBtn:focus-visible{box-shadow:0 0 0 2px var(--amber)}
+  #vibeBtn svg{flex:none;display:block;width:1.5em;height:1.5em;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  #vibeBtn svg .f{fill:currentColor}
+  #vibes{position:absolute;right:0;top:0;width:var(--ww);height:var(--wh);padding:calc(var(--vh) + 5px) 7px 7px;
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:3px;
+    background:var(--ink);border-radius:18px;
+    clip-path:inset(0 0 calc(100% - var(--vh)) calc(100% - var(--pw,155px)) round calc(var(--vh)/2));
+    transition:clip-path .2s cubic-bezier(.5,0,.8,.4)}
+  /* it comes out fast and settles; it goes back quicker than it came */
+  #vibe.open #vibeBtn{width:var(--ww);transition:width .34s cubic-bezier(.2,.8,.2,1)}
+  #vibe.open #vibes{clip-path:inset(0 round 18px);transition:clip-path .34s cubic-bezier(.2,.8,.2,1)}
+  /* A tile. The vibe on show is lit the way the chosen preset is. */
+  #vibes button{display:flex;flex-direction:column;gap:5px;min-width:0;min-height:0;padding:5px;border:0;border-radius:12px;
+    background:none;color:var(--cream);font:inherit;text-align:left;cursor:pointer;outline:0}
+  #vibes button:hover{color:var(--amber)}
+  #vibes button:focus-visible{box-shadow:0 0 0 2px var(--amber)}
+  #vibes button[aria-checked=true]{background:var(--cream);color:var(--ink)}
+  /* its colours, poured side by side (see bands, in the script) */
+  #vibes .sw{flex:1;min-height:0;display:block;border-radius:8px;overflow:hidden}
+  #vibes .sw svg{display:block;width:100%;height:100%}
+  /* its name, set edge to edge as the song is (see fitVibes) */
+  #vibes .nm{flex:none;display:block}
+  #vibes .ln{display:block;animation:none;clip-path:none;color:inherit;text-shadow:none;cursor:inherit;
+    user-select:none;-webkit-user-select:none}
+  @media (prefers-reduced-motion:reduce){#vibeBtn,#vibes,#vibe.open #vibeBtn,#vibe.open #vibes{transition:none}}
 
   /* ---------- the song: every line set edge to edge ---------- */
   #block{grid-column:2;grid-row:2;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;
@@ -177,7 +224,7 @@
   /* ---------- right: the cover, and under it the last songs played ---------- */
   #side{grid-column:3;grid-row:2;min-height:0;display:flex;flex-direction:column;gap:12px;overflow:hidden;
     padding:24px 9px 9px 0;margin-top:-24px;transition:opacity .25s}
-  .art{--r:16px;--sh:8px;position:relative;flex:none;width:min(100%,38vh);aspect-ratio:1;border-radius:var(--r);overflow:hidden;
+  .art{--r:16px;--sh:8px;position:relative;flex:none;width:var(--artw);aspect-ratio:1;border-radius:var(--r);overflow:hidden;
     background:var(--ink);box-shadow:var(--sh) var(--sh) 0 var(--ink);container-type:inline-size}
   .art .ph,#actArt .ph{position:absolute;inset:0;display:grid;place-items:center;background:var(--b,#5B2BE0);color:var(--f,#FFE9C9);
     font-weight:900;font-stretch:125%;font-size:62cqw;line-height:1;text-transform:uppercase}
@@ -278,7 +325,8 @@
      up. The station's name, the light and the mute button stay lit throughout. */
   [data-air=blocked] #block:not(.out){opacity:.16}
   [data-air=blocked] #side,[data-air=blocked] #presets,[data-air=blocked] #vibe,[data-air=blocked] .fader{opacity:.35}
-  #presets,#vibe,.fader{transition:opacity .25s}
+  [data-air=blocked] #vibe *,[data-air=blocked] #vibe::before{pointer-events:none}   /* and the vibe's window waits for the sound: that touch is not a choice */
+  #presets,.fader{transition:opacity .25s}
   #ask{grid-column:2;grid-row:2;align-self:center;position:relative;z-index:5;width:100%;min-width:0;
     display:flex;align-items:center;gap:calc(var(--pad)*.7);padding:var(--pad);border:0;font:inherit;text-align:left;cursor:pointer;
     background:var(--amber);color:var(--ink);border-radius:clamp(16px,2.2vw,30px);box-shadow:8px 8px 0 var(--ink);
@@ -313,7 +361,7 @@
   .col.drag .gain .tag{background:var(--amber)}
   .hz{bottom:calc(var(--pad)*1.7 + var(--bar) - 2px);background:var(--ink);color:var(--cream)}
   /* the song steps up into the header while the equaliser has the page */
-  #np{display:none;min-width:0;max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  #np{grid-area:1/2/3/3;justify-self:center;display:none;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     padding:.75em 1.2em;font-weight:700;font-stretch:100%;font-size:13px;line-height:1}
   body.desk #np{display:block}
 
@@ -347,16 +395,18 @@
   @media (max-width:760px){
     :root{--volw:40px;--gl:0px;--gr:var(--gut);--volx:calc(var(--pad)/2 - var(--gap)/4)}
     body{grid-template-columns:minmax(0,1fr) var(--volw);grid-template-rows:auto minmax(0,1fr) auto auto;row-gap:12px}
-    /* The name and the light share a row, and it is a grid, so that it stays one
-       row whatever the light says. When the two could wrap, they did on a narrow
-       phone, or one set to large type, for the second the light says
-       "Connecting": the header grew, the song under it was set smaller, and then
-       back again. Should the two ever not fit, the name is drawn smaller. */
-    header{display:grid;grid-template-columns:minmax(0,1fr) auto;padding-bottom:0;row-gap:8px}
+    /* The top bar in two columns: the name, and the pills. The bar is as tall
+       as ever, whatever the light says, so the song under it is never set
+       again for a word. The name has what room the pills leave it: it is
+       drawn that wide, and stands in the middle of the bar's height. */
+    header{grid-template-columns:minmax(0,1fr) auto;padding-bottom:0}
+    .wm{--ws:2.2px}
     .st{grid-area:1/2}
-    /* no room beside the name here: the vibe takes a row of its own under it */
-    #vibe{grid-area:2/1/auto/-1;margin:0;padding:8px 10px 8px 1.4em}
-    #vibe .run{flex:1;width:auto}
+    /* The cover is at the foot of the page here, so the vibe's window opens
+       over the song: as wide as the page allows, about as tall as it is
+       wide, and never past the foot of the screen. */
+    #vibe{grid-area:2/2;--ww:min(calc(100vw - var(--pad)*2),330px)}
+    #vibe.open::before,#vibes{height:auto;aspect-ratio:10/11;max-height:calc(100vh - var(--pad)*2 - 60px);max-height:calc(100dvh - var(--pad)*2 - 60px)}
     #block,#ask{grid-column:1}
     #side{grid-column:1;grid-row:3;display:grid;grid-template-columns:108px minmax(0,1fr);gap:10px;align-items:start}
     .art{--r:12px;--sh:5px;width:108px}
@@ -368,7 +418,7 @@
     #presets button{padding:.9em .8em;letter-spacing:.05em}
     .hint{display:none!important}
     .tag{font-size:9px;padding:2px 3px}
-    .hz{bottom:auto;top:calc(var(--pad) + 84px)}       /* up top here: a deep cut would land on them below */
+    .hz{bottom:auto;top:calc(var(--pad) + var(--top) + 9px)}       /* up top here: a deep cut would land on them below */
     #np{display:none!important}
   }
 </style>
@@ -379,9 +429,16 @@
 
   <header>
     <span class="wm" role="img" aria-label="Radio Change"><span class="foil"><i class="sheet s1"><b></b></i><i class="sheet s2"><b></b></i><i class="sheet s3"><b></b></i><i class="grain"></i><i class="light"><b></b></i><img src="radio-change-logo.png?v=2" alt="" width="685" height="143" draggable="false" /></span></span>
-    <div id="vibe" class="pill hit lab" role="slider" tabindex="0" aria-label="Vibe" aria-orientation="horizontal"><span>Vibe</span><div class="run"><b></b></div></div>
     <span id="np" class="pill"></span>
     <span class="st pill lab"><i></i><span id="st">On air</span></span>
+    <div id="vibe">
+      <button id="vibeBtn" class="pill hit lab" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="vibes">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle class="f" cx="12" cy="12" r="4.3"/><path d="M12 2.4v2.5M12 19.1v2.5M2.4 12h2.5M19.1 12h2.5M5.2 5.2 7 7M17 17l1.8 1.8M5.2 18.8 7 17M17 7l1.8-1.8"/></svg>
+        <span>Vibe check</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M19.6 12.67A7.6 7.6 0 1 1 11.33 4.4a5.9 5.9 0 0 0 8.27 8.27z"/></svg>
+      </button>
+      <div id="vibes" class="hit" role="radiogroup" aria-label="Vibe"></div>
+    </div>
   </header>
 
   <div id="vol">
@@ -444,8 +501,8 @@
      ground   big flat fluid shapes; hot when sound is running, dusk when not.
               Ten columns are lit to each EQ band's level, and one more, behind
               the volume fader, to the level going out
-     vibe     the colours of all of it, on a slider in the header: from the
-              brightest, by way of the warm ones, to the dark
+     vibe     the colours of all of it: nine sets, each named after an act, in
+              a window that the pill under the light opens into
      song     artist and title stretched edge to edge, cover, last songs played
      sound    no play button: the page goes on air by itself (or on the first
               touch, where the browser insists), and there is only mute
@@ -459,73 +516,66 @@ const NB=radio.NB;
 radio.keepAlive=true;               // no play button here, so a lost signal redials itself
 
 /* ================= the vibe =================
-   Everything coloured on the page comes from one of these. The slider in the
-   header runs through them in this order: the brightest first, then the warm
-   ones, then the dark, and the blackest last. CHANGE is the station's own, and
-   where a first visit starts.
-     hot    the field's seven colours when sound is running (ink is the eighth)
+   Everything coloured on the page comes from one of these. Each is a set of
+   colours that go together, for one mood, and carries the name of an act
+   that stands for it. They are in the order the window shows them, three to
+   a row: the brightest first and the darkest last. JIMI HENDRIX is the
+   station's own colours, and where a first visit starts.
+     hot    the field's seven colours when sound is running (ink is the eighth).
+            Neighbours in the list are neighbours on the page
      dusk   the three it falls back to when there is none
      bar    the equaliser's ten bars, bass to treble
      tiles  stand-ins for a missing cover: made from hot where none are given */
 const VIBES=[
-  /* paint on a wall: lemon, tangerine and coral against raspberry and purple, and a splash of teal */
-  {id:"pop",name:"Pop",ink:"#2A1422",cream:"#FFF4D8",amber:"#FBD23B",live:"#F4553F",
-    hot:["#F4553F","#F88B2A","#FBD23B","#E0317A","#9A45B0","#5B3A9E","#35BDB4"],
-    dusk:["#5A2D82","#B52E63","#2A8F8C"],
-    bar:["#FBD23B","#F9AE32","#F88B2A","#F66F35","#F4553F","#E0317A","#BC3A92","#9A45B0","#5B3A9E","#35BDB4"]},
-  /* a punk sleeve: acid yellow and hot pink on black, cut with cyan */
-  {id:"punk",name:"Punk",ink:"#170A1C",cream:"#FFF6DC",amber:"#FFE500",live:"#F4212E",
-    hot:["#FF2E88","#FFE500","#00C2E0","#FF5FA8","#F4212E","#FFB800","#B5108C"],
-    dusk:["#7D0F4E","#C21668","#0E6E82"],
-    bar:["#FFE500","#FFC800","#FFA000","#FF6A00","#F4212E","#FF2E88","#E0189A","#B5108C","#5A1FC0","#00C2E0"]},
-  {id:"change",name:"Change",ink:"#1C0836",cream:"#FFF3DC",amber:"#FFC93C",live:"#FF4A3A",
+  /* a day at the beach: the sea in turquoise, seafoam and two blues, and the sun on it in yellow, tangerine and coral */
+  {id:"beachboys",name:"Beach Boys",ink:"#0A2140",cream:"#FFF6E0",amber:"#FFD23F",live:"#FF4B3E",
+    hot:["#0FB5AE","#FFCF3F","#2B8CE6","#FF6B5B","#3CCB8E","#FF9838","#1B4DBE"],
+    dusk:["#127C86","#1E55A8","#C8546A"],
+    bar:["#FFCF3F","#FFB43B","#FF9838","#FF8149","#FF6B5B","#3CCB8E","#0FB5AE","#1DA0CA","#2B8CE6","#1B4DBE"]},
+  /* the sleeve: acid yellow and hot pink on black, cut with cyan, red and a sour green */
+  {id:"pistols",name:"Sex Pistols",ink:"#150A18",cream:"#FFF7DC",amber:"#FFE500",live:"#F4212E",
+    hot:["#FF2E88","#FFE500","#00BEE0","#F4212E","#5FD42A","#B5108C","#FFB800"],
+    dusk:["#9A1160","#0F7288","#5A1FA8"],
+    bar:["#FFE500","#FFC800","#FFA000","#FF6A00","#F4212E","#FF2E88","#E0189A","#B5108C","#5FD42A","#00BEE0"]},
+  /* red, gold and green, with orange, a young leaf and the red earth between them */
+  {id:"marley",name:"Bob Marley",ink:"#1A1208",cream:"#FFF4D6",amber:"#FFC72C",live:"#EE3524",
+    hot:["#1E9E48","#FFC72C","#E2302A","#0F6D3B","#F58A1F","#86C232","#8E2A1B"],
+    dusk:["#14603A","#8A2018","#94701A"],
+    bar:["#E2302A","#EC5A24","#F58A1F","#FAA826","#FFC72C","#C6C42E","#86C232","#45AE3D","#1E9E48","#0F6D3B"]},
+  /* the seventies: burnt orange and mustard against teal and petrol, with wine, olive and sand */
+  {id:"zeppelin",name:"Led Zeppelin",ink:"#1F110B",cream:"#FFF0D4",amber:"#F2B33D",live:"#E8452C",
+    hot:["#E2571E","#1D8C86","#F0B030","#8C1F45","#7C8F2E","#E8956A","#14506A"],
+    dusk:["#7A2E1A","#145A62","#6A1A3A"],
+    bar:["#F0B030","#EA8A28","#E2571E","#C03A2C","#A02A3C","#8C1F45","#4A3A5C","#14506A","#1D8C86","#7C8F2E"]},
+  /* the station's own, as it was: every colour of a psychedelic poster on deep purple */
+  {id:"hendrix",name:"Jimi Hendrix",ink:"#1C0836",cream:"#FFF3DC",amber:"#FFC93C",live:"#FF4A3A",
     hot:["#FF3B2E","#FF8A1E","#FFC93C","#E81E8C","#6A1FE0","#1230C8","#00A896"],
     dusk:["#2A1AA0","#B0126F","#4A1CB8"],
     bar:["#FF8A1E","#FF6A1F","#FF3B2E","#F0286A","#E81E8C","#B01FC0","#6A1FE0","#1E36D6","#0B7BD6","#00A896"],
     tiles:[["#FF4A1C","#1A1247"],["#FFD21F","#17110F"],["#00A870","#0E1F3D"],["#FF6FAE","#2A0F6B"],
            ["#5B2BE0","#FFE9C9"],["#D8FF3E","#0F3B2C"],["#16B4F2","#2B0B3A"],["#E81E6E","#FFF3D6"]]},
-  /* the station's own with the blues and the teal taken out: its warm half, and purples for the dark */
-  {id:"sundown",name:"Sundown",ink:"#2B0B2E",cream:"#FFF2DC",amber:"#FFCB3D",live:"#FF5A36",
-    hot:["#FF5A36","#FF9124","#FFCB3D","#F0307F","#9A2BD0","#55199A","#C2185B"],
-    dusk:["#5A1A86","#C22E62","#8A1A4A"],
-    bar:["#FFA42A","#FF8A26","#FF7030","#FF5A36","#F5405C","#F0307F","#C92CA8","#9A2BD0","#7422B8","#55199A"]},
-  /* all fire: gold through orange and vermilion to pink, plum and wine. No blue, no green */
-  {id:"ember",name:"Ember",ink:"#2A0714",cream:"#FFF1DA",amber:"#FFC83A",live:"#FF5A2E",
-    hot:["#FF4322","#FF8419","#FFC83A","#FF4F8B","#B3167A","#6E0F3A","#C8421A"],
-    dusk:["#7A1526","#C25A12","#4A0C36"],
-    bar:["#FFA126","#FF8419","#FF6820","#FF4D22","#F03538","#EE2F62","#F03C8A","#CC2288","#A3157A","#7A1466"]},
-  /* a gig poster: red, orange and yellow on black and charcoal, and one hit of electric blue */
-  {id:"riot",name:"Riot",ink:"#150508",cream:"#FFF4E0",amber:"#FFD21A",live:"#F0162E",
-    hot:["#F0162E","#FF6A1A","#FFD21A","#C20E26","#1F4BFF","#7A0A1C","#33303A"],
-    dusk:["#5C0A16","#262430","#8A1A12"],
-    bar:["#FFD21A","#FFB01A","#FF8A1A","#FF6A1A","#F83A22","#F0162E","#C20E26","#9A0C22","#5A1A8C","#1F4BFF"]},
-  /* the lights over a stage: magenta, electric blue, cyan and violet out of the black. Lime is kept for the knobs */
-  {id:"voltage",name:"Voltage",ink:"#07061A",cream:"#F8F3EC",amber:"#C8FF2E",live:"#FF3D5A",
-    hot:["#FF2BD6","#3D5BFF","#00B8E6","#8A2BFF","#1B1FA8","#FF3D5A","#5A16C8"],
-    dusk:["#1A1C7A","#5A1290","#0A4A6A"],
-    bar:["#00B8E6","#1EA0F5","#2E7DFF","#3D5BFF","#5F3DFF","#8A2BFF","#B02BEF","#D82BE0","#FF2BD6","#FF3D5A"]},
-  /* after hours: crimson, wine and deep violet down to midnight, and one glow of gold */
-  {id:"night",name:"Night",ink:"#0C0616",cream:"#F6EBDA",amber:"#E2A62E",live:"#E5432F",
-    hot:["#B0182E","#D0561C","#E2A62E","#8A1552","#4A1784","#1D2173","#0F5560"],
-    dusk:["#1B1550","#5C1034","#2B1158"],
-    bar:["#E2A62E","#D97F24","#D0561C","#C03524","#B0182E","#9D1640","#8A1552","#6A166B","#4A1784","#1D2173"]},
-  /* blood and rust: reds from fresh to dried on black, with one streak of rust */
-  {id:"blood",name:"Blood",ink:"#0B0406",cream:"#F2E6D8",amber:"#E0862E",live:"#D4202F",
-    hot:["#8E0F1F","#D4202F","#5E0A14","#B5461C","#3A0A10","#6B1230","#2A2226"],
-    dusk:["#3A070E","#1E1719","#4A0C1E"],
-    bar:["#E0862E","#C8641F","#B5461C","#C22F22","#D4202F","#B0182A","#8E0F1F","#741024","#5E0A14","#3A0A10"]},
-  /* slow and heavy: moss, pine and petrol under a purple haze, lit by a sick green */
-  {id:"doom",name:"Doom",ink:"#070A08",cream:"#EDE9D6",amber:"#A9C92B",live:"#D4432A",
-    hot:["#2E5E2A","#7FAE1C","#1C3A2A","#4A1E66","#7A6A14","#14302E","#6A2A9A"],
-    dusk:["#14261A","#24123A","#0F2424"],
-    bar:["#A9C92B","#86AE24","#5F8F24","#3F7528","#2E5E2A","#1E4A38","#1A3A4E","#2E2466","#4A1E66","#6A2A9A"]},
-  /* lights out: charcoal, gunmetal and cold steel, and a single line of red */
-  {id:"blackout",name:"Blackout",ink:"#050507",cream:"#E9E6E2",amber:"#BFC4D4",live:"#E0263A",
-    hot:["#B3122A","#23242E","#34374A","#15161C","#4B5470","#5A0C18","#1C2238"],
-    dusk:["#191A22","#2A0A10","#1A2030"],
-    bar:["#B3122A","#8E1024","#6A0E1E","#4A1220","#34202E","#2E2A3E","#34374A","#3F465E","#4B5470","#5E6A8C"]},
+  /* glam: the red and the blue of the bolt, powder pink, magenta, turquoise and lilac on midnight. Orange is kept for the knobs */
+  {id:"bowie",name:"David Bowie",ink:"#0D0C2B",cream:"#F7F1EC",amber:"#FF9E3D",live:"#FF3B2F",
+    hot:["#F03A2B","#2450E8","#FFA6B8","#D4287E","#22B8D8","#8E86E8","#1A2A96"],
+    dusk:["#1C2C92","#8A2456","#0F6078"],
+    bar:["#F03A2B","#F04A5E","#E33C8C","#D4287E","#A85AD8","#8E86E8","#4A68F0","#2450E8","#2484E0","#22B8D8"]},
+  /* a flannel shirt, washed too often: pool blue and denim, mustard, brick, moss, rust and a grey plum */
+  {id:"nirvana",name:"Nirvana",ink:"#0D141F",cream:"#F2ECDC",amber:"#F5CF1F",live:"#E0412E",
+    hot:["#2899D4","#E3B322","#B03A2E","#35598C","#5F8034","#C96A28","#6A4C7A"],
+    dusk:["#1E4468","#4A5E2A","#6E2A28"],
+    bar:["#E3B322","#D68A25","#C96A28","#B03A2E","#8E4160","#6A4C7A","#35598C","#2E7CB0","#2899D4","#5F8034"]},
+  /* heavy: purple, orange and a sick green out of the black, with dried blood and pine */
+  {id:"sabbath",name:"Black Sabbath",ink:"#0B070F",cream:"#EFE8DC",amber:"#FF9A1F",live:"#E0362B",
+    hot:["#6A2BB8","#F0761A","#3A1670","#7DB01F","#B2301E","#1F5A3A","#8E2A8A"],
+    dusk:["#2E1458","#1A3A28","#5A2410"],
+    bar:["#F0761A","#D85A1C","#B2301E","#8E2A5A","#8E2A8A","#6A2BB8","#4A1E90","#1F5A3A","#4A8A26","#7DB01F"]},
+  /* light through a prism in a dark room: the six colours in their order, and black on either side of them */
+  {id:"floyd",name:"Pink Floyd",ink:"#06060A",cream:"#F0EEE8",amber:"#EDBB2A",live:"#E0252C",
+    hot:["#C81C2C","#E5681A","#E6B422","#1F8A4A","#1A5CC8","#5527A8","#0F0F16"],
+    dusk:["#16161E","#231A3E","#101C2E"],
+    bar:["#C81C2C","#D8421F","#E5681A","#E68E1E","#E6B422","#84A236","#1F8A4A","#1D7389","#1A5CC8","#5527A8"]},
 ];
-const HOME="change";
+const HOME="hendrix";
 const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
 const hex=c=>"#"+c.map(v=>Math.round(v*255).toString(16).padStart(2,"0")).join("");
 const light=h=>{const c=rgb(h);return .299*c[0]+.587*c[1]+.114*c[2];};
@@ -540,8 +590,10 @@ VIBES.forEach(v=>{
 /* what the shader is drawing with, and what it is on its way to: a change of vibe runs in, it does not cut */
 const field={ink:new Float32Array(3),hot:new Float32Array(24),dusk:new Float32Array(24),bar:new Float32Array(30)};
 const fieldTo={ink:new Float32Array(3),hot:new Float32Array(24),dusk:new Float32Array(24),bar:new Float32Array(30)};
-const vibeEl=$("#vibe"),runEl=vibeEl.querySelector(".run");
-let vibe=null,vibeAt=0;
+/* the stylesheet's seven colours go the same way: where they are, and where they are going */
+const paint=new Float32Array(CSSV.length*3),paintTo=new Float32Array(CSSV.length*3);
+const vibeEl=$("#vibe"),vibeBtn=$("#vibeBtn"),vibesEl=$("#vibes");
+let vibe=null,painting=false;
 
 /* flat stand-in for a missing cover: two colours and an initial, from the vibe on show */
 function tileFor(text){
@@ -552,53 +604,117 @@ function paintTile(el){
   const t=tileFor(el.dataset.tile);
   el.style.setProperty("--b",t[0]);el.style.setProperty("--f",t[1]);
 }
-/* x is a place on the slider. A whole number is a vibe; anything between two
-   is a mix of them, which is what a drag passes through on its way. */
-function setVibe(x,cut){
-  const n=VIBES.length;
-  vibeAt=Math.max(0,Math.min(n-1,x));
-  const i=Math.min(n-2,Math.floor(vibeAt)),t=vibeAt-i,a=VIBES[i],b=VIBES[i+1];
-  for(const k in field){
-    const to=fieldTo[k],p=a.f[k],q=b.f[k];
-    for(let j=0;j<to.length;j++)to[j]=p[j]+(q[j]-p[j])*t;
-    if(cut)field[k].set(to);
-  }
+function putPaint(){
   const css=document.documentElement.style;
-  CSSV.forEach((name,j)=>css.setProperty("--"+name,hex(a.css[j].map((c,m)=>c+(b.css[j][m]-c)*t))));
-  runEl.style.setProperty("--x",vibeAt.toFixed(3));
-  const near=VIBES[Math.round(vibeAt)];
-  if(near===vibe)return;
-  vibe=near;
-  vibeEl.setAttribute("aria-valuenow",VIBES.indexOf(vibe));vibeEl.setAttribute("aria-valuetext",vibe.name);
+  CSSV.forEach((name,j)=>css.setProperty("--"+name,hex([paint[j*3],paint[j*3+1],paint[j*3+2]])));
+}
+/* The page takes on a vibe. Its colours run in, on the field and on everything
+   else (see the frame loop); with `cut` they are simply there, as on arrival. */
+function setVibe(v,cut){
+  if(v===vibe)return;
+  vibe=v;
+  for(const k in field){fieldTo[k].set(v.f[k]);if(cut)field[k].set(v.f[k]);}
+  paintTo.set(v.css.flat());
+  if(cut){paint.set(paintTo);putPaint();}else painting=true;
+  VIBES.forEach(w=>{w.el.setAttribute("aria-checked",w===v);w.el.tabIndex=w===v?0:-1;});
   document.querySelectorAll("[data-tile]").forEach(paintTile);
 }
-/* the slider only ever rests on a vibe, and that one is kept for the next visit */
-function restVibe(x){
-  setVibe(Math.round(x));
-  try{localStorage.setItem("radiochange.vibe",vibe.id);}catch(e){}
+/* a vibe that was chosen is kept for the next visit */
+function pickVibe(v){
+  setVibe(v);
+  try{localStorage.setItem("radiochange.vibe",v.id);}catch(e){}
 }
-runEl.style.setProperty("--n",VIBES.length);
-vibeEl.setAttribute("aria-valuemin",0);vibeEl.setAttribute("aria-valuemax",VIBES.length-1);
-vibeEl.addEventListener("pointerdown",e=>{
-  const r=runEl.getBoundingClientRect();
-  if(e.clientX<r.left-8||e.clientX>r.right+8)return;     // the label is not part of the run
-  vibeEl.setPointerCapture(e.pointerId);vibeEl.classList.add("drag");
-  const at=ev=>setVibe((ev.clientX-r.left)/r.width*VIBES.length-.5);
-  at(e);
-  const up=()=>{
-    vibeEl.classList.remove("drag");restVibe(vibeAt);
-    ["pointermove","pointerup","pointercancel"].forEach((t,j)=>vibeEl.removeEventListener(t,j?up:at));
-  };
-  ["pointermove","pointerup","pointercancel"].forEach((t,j)=>vibeEl.addEventListener(t,j?up:at));
+
+/* ---------- the window ----------
+   A tile's colours: the seven of its field side by side, as bands with a lean
+   and a sway to them, in a drawing 100 wide and 60 tall that is stretched to
+   the tile. Each band is drawn from its left edge to the right hand side,
+   over the one before. Every other edge sways the other way, and every other
+   tile (n says which this is) leans the other way, so neighbours are not cut
+   alike. */
+function bands(v,n){
+  const c=v.hot,lean=n%2?-9:9;
+  let s='<rect width="100" height="60" fill="'+c[0]+'"/>';
+  for(let k=1;k<c.length;k++){
+    const x=k/c.length*100,top=x+lean,foot=x-lean,sway=k%2?3.5:-3.5;
+    s+='<path fill="'+c[k]+'" d="M'+top.toFixed(1)+' 0C'+(top+sway).toFixed(1)+' 20 '+(foot+sway).toFixed(1)+' 40 '+foot.toFixed(1)+' 60H101V0Z"/>';
+  }
+  return s;
+}
+VIBES.forEach((v,n)=>{
+  const b=v.el=document.createElement("button");
+  b.type="button";b.vibe=v;
+  b.setAttribute("role","radio");b.setAttribute("aria-label",v.name);
+  b.innerHTML='<span class="sw"><svg viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">'+bands(v,n)+'</svg></span><span class="nm"></span>';
+  vibesEl.append(b);
 });
+/* The names are set as the song is: one line each, and the letters as narrow or
+   as wide as it takes to reach both edges of the tile (see the type). All nine
+   are one size, the one at which the longest of them fits with its letters at
+   their narrowest. */
+function fitVibes(){
+  const W=VIBES[0].el.lastChild.clientWidth;
+  if(W<20)return;
+  const ls=VIBES.map(v=>gauge({t:v.name.toLocaleUpperCase(),k:"a"}));
+  const s=Math.min(...ls.map(l=>100*W/l.w0));
+  ls.forEach((l,i)=>{l.s=s;VIBES[i].el.lastChild.replaceChildren(lineOf(spread(l,W),0,"span"));});
+}
+new ResizeObserver(()=>fitVibes()).observe(vibesEl);
+/* how wide the pill is at rest: the window is cut down to that, and grows from it */
+function sizeVibe(){
+  vibeBtn.style.width="auto";
+  const w=vibeBtn.getBoundingClientRect().width;
+  vibeBtn.style.width="";
+  if(w)vibeEl.style.setProperty("--pw",Math.ceil(w)+"px");
+}
+sizeVibe();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sizeVibe);
+
+/* A mouse opens the window by being on the pill, and shuts it by leaving the
+   window: a moment after, so that a pointer that strays over the edge and comes
+   back has not lost it. A finger opens it with a tap on the pill, and shuts it
+   with another, or with a tap anywhere else. The keys open it by coming to it.
+   Choosing a vibe does not shut it: the page changes around it, and the next
+   one can be tried. */
+let vibeOpen=false,vibeOver=false,vibeTO=null;
+function openVibe(on){
+  clearTimeout(vibeTO);
+  if(on===vibeOpen)return;
+  vibeOpen=on;
+  vibeEl.classList.toggle("open",on);vibeBtn.setAttribute("aria-expanded",on);
+  if(on)closeAct();
+}
+vibeEl.addEventListener("pointerenter",e=>{
+  if(e.pointerType==="touch")return;
+  vibeOver=true;openVibe(true);
+});
+vibeEl.addEventListener("pointerleave",e=>{
+  if(e.pointerType==="touch")return;
+  vibeOver=false;clearTimeout(vibeTO);vibeTO=setTimeout(()=>openVibe(false),240);
+});
+vibeBtn.addEventListener("click",()=>openVibe(vibeOver||!vibeOpen));
+vibesEl.addEventListener("click",e=>{
+  const b=e.target.closest("button");
+  if(b)pickVibe(b.vibe);
+});
+addEventListener("pointerdown",e=>{if(vibeOpen&&!vibeEl.contains(e.target))openVibe(false);});
+vibeEl.addEventListener("focusin",e=>{if(e.target.matches(":focus-visible"))openVibe(true);});
+vibeEl.addEventListener("focusout",e=>{if(!vibeOver&&!vibeEl.contains(e.relatedTarget))openVibe(false);});
+/* Left and right go from tile to tile, on through the rows, and the page goes
+   with them. Up and down are the volume's, here as everywhere (see the engine). */
 vibeEl.addEventListener("keydown",e=>{
-  const step={ArrowLeft:-1,ArrowRight:1}[e.key];
-  if(step){e.preventDefault();restVibe(Math.round(vibeAt)+step);}
+  if(e.key==="Escape"&&vibeOpen){vibeBtn.focus();openVibe(false);return;}
+  const step={ArrowLeft:-1,ArrowRight:1}[e.key],to=VIBES[VIBES.indexOf(vibe)+step];
+  if(!step)return;
+  e.preventDefault();
+  if(!to)return;
+  pickVibe(to);openVibe(true);
+  if(e.target!==vibeBtn)to.el.focus();
 });
 {
   let id=null;
   try{id=localStorage.getItem("radiochange.vibe");}catch(e){}
-  setVibe(VIBES.findIndex(v=>v.id===(VIBES.some(w=>w.id===id)?id:HOME)),true);
+  setVibe(VIBES.find(v=>v.id===id)||VIBES.find(v=>v.id===HOME),true);
 }
 
 /* ================= the ground ================= */
@@ -1728,6 +1844,14 @@ function frame(now){
     if(s.on){tgt=Math.min(1,s.level*1.7)*loud;k=dt*(tgt>out?30:9);}
     out+=(tgt-out)*Math.min(1,k);
   }
+  /* the colours run toward the vibe on show: the stylesheet's here, the field's below */
+  if(painting){
+    const m=Math.min(1,dt*6);
+    let far=0;
+    for(let i=0;i<paint.length;i++){paint[i]+=(paintTo[i]-paint[i])*m;far=Math.max(far,Math.abs(paintTo[i]-paint[i]));}
+    if(far<.004){paint.set(paintTo);painting=false;}
+    putPaint();
+  }
   if(prog){
     const r=muteBtn.getBoundingClientRect(),cr=cv.getBoundingClientRect();
     gl.uniform2f(U.uRes,cv.width,cv.height);
@@ -1735,7 +1859,6 @@ function frame(now){
     gl.uniform1f(U.uT,T);gl.uniform1f(U.uBass,bass);gl.uniform1f(U.uTreb,treb);gl.uniform1f(U.uOn,onAmt);
     gl.uniform1f(U.uX0,x0);gl.uniform1f(U.uX1,x1);gl.uniform1f(U.uDesk,deskAmt);gl.uniform1f(U.uOut,out);
     gl.uniform1fv(U.uBands,levels);
-    /* the colours run toward the vibe on show */
     for(const k in field){const a=field[k],b=fieldTo[k],m=Math.min(1,dt*6);for(let i=0;i<a.length;i++)a[i]+=(b[i]-a[i])*m;}
     gl.uniform3fv(U.uInk,field.ink);gl.uniform3fv(U.uHot,field.hot);gl.uniform3fv(U.uDusk,field.dusk);gl.uniform3fv(U.uBar,field.bar);
     gl.uniform4fv(U.uSel,selRects);gl.uniform1i(U.uSelN,selN);
@@ -1751,7 +1874,7 @@ paintEq();paintSound();paintCover();paintHist();paintAsk();
 /* straight to the song: wait a beat for the first title before falling back to the station name */
 setTimeout(()=>{if(!shown)showTrack();},1500);
 (document.fonts&&document.fonts.load?document.fonts.load('900 100px Archivo'):Promise.resolve())
-  .catch(()=>{}).then(()=>{widths.clear();bears.clear();build(false);paintAsk();});
+  .catch(()=>{}).then(()=>{widths.clear();bears.clear();build(false);paintAsk();fitVibes();});
 let rsTO=null;
 new ResizeObserver(()=>{clearTimeout(rsTO);rsTO=setTimeout(()=>{build(false);paintAsk();fitHist();readSelection();},60);}).observe(block);
 requestAnimationFrame(frame);
