@@ -9,7 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Martian+Mono:wdth,wght@75..112.5,100..800&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --ink:#1C0836;--cream:#FFF3DC;--amber:#FFC93C;
+    /* the colours are set by the script, from the vibe on show (see VIBES); these are the station's own */
+    --ink:#1C0836;--cream:#FFF3DC;--amber:#FFC93C;--live:#FF4A3A;--pick:#E81E8C;--d1:#2A1AA0;--d2:#B0126F;
     --pad:clamp(14px,2.2vw,34px);
     --gap:clamp(14px,2vw,30px);
     --bar:clamp(48px,6.6vh,60px);
@@ -41,7 +42,7 @@
     -webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;
   }
   canvas#c{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0;
-    background:linear-gradient(140deg,#1C0836,#2A1AA0 55%,#B0126F)}
+    background:linear-gradient(140deg,var(--ink),var(--d1) 55%,var(--d2))}
 
   header,#block,#side,#vol,footer{position:relative;z-index:2}
   header,#block,#side,footer{pointer-events:none}
@@ -49,16 +50,31 @@
   .pill{background:var(--ink);border-radius:999px}
   .lab{font-weight:800;font-stretch:112%;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
 
-  header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;
+  header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;column-gap:10px;
     padding-bottom:calc(var(--pad)*.5);min-height:calc(var(--pad)*.5 + 30px)}
   .wm{font-weight:900;font-stretch:125%;font-size:clamp(15px,1.5vw,22px);letter-spacing:.08em;text-transform:uppercase;
     text-shadow:.07em .07em 0 var(--ink)}
   .st{display:flex;align-items:center;gap:.7em;padding:.75em 1.1em}
   .st i{width:.9em;height:.9em;border-radius:50%;background:var(--cream);opacity:.4}
-  [data-air=on] .st i{background:#FF4A3A;opacity:1}
+  [data-air=on] .st i{background:var(--live);opacity:1}
   [data-air=dialing] .st i{opacity:1;animation:blink .35s steps(2,jump-none) infinite}
   body.quiet .st i{background:var(--amber);opacity:1}
   @keyframes blink{50%{opacity:.25}}
+
+  /* ---------- the vibe: a slider through the page's colours ----------
+     The run is one cell to a vibe, each showing three of its colours, the
+     brightest vibe on the left and the darkest on the right. The knob always
+     comes to rest in the middle of a cell. */
+  #vibe{display:flex;align-items:center;gap:1.1em;padding:5px 8px 5px 1.4em;margin:0 auto 0 clamp(12px,2vw,28px);
+    cursor:ew-resize;touch-action:none;outline:0}
+  #vibe:focus-visible{box-shadow:0 0 0 2px var(--amber)}
+  #vibe .run{position:relative;display:flex;gap:2px;width:clamp(150px,18vw,240px);height:20px}
+  #vibe .run i{flex:1;border-radius:3px;background:linear-gradient(90deg,var(--a) 33.4%,var(--b) 0 66.7%,var(--c) 0)}
+  #vibe .run i:first-child{border-radius:10px 3px 3px 10px}
+  #vibe .run i:last-of-type{border-radius:3px 10px 10px 3px}
+  #vibe .run b{position:absolute;top:50%;left:calc((var(--x,0) + .5)/var(--n,1)*100%);width:22px;height:22px;margin:-11px 0 0 -11px;
+    border-radius:50%;background:var(--cream);box-shadow:0 0 0 3px var(--ink);transition:left .22s cubic-bezier(.3,.7,.3,1)}
+  #vibe.drag .run b{transition:none}             /* a drag stays under the finger */
 
   /* ---------- the song: every line set edge to edge ---------- */
   #block{grid-column:2;grid-row:2;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;
@@ -84,7 +100,7 @@
   .ln{user-select:text;-webkit-user-select:text;cursor:text}
   .ln.a::selection,.ln.a .br::selection{background:transparent;color:var(--cream);text-shadow:.03em .03em 0 var(--ink)}
   .ln.t::selection,.ln.t .br::selection{background:transparent;color:var(--ink);-webkit-text-stroke:.04em var(--cream)}
-  body.nogl .ln::selection,body.nogl .ln .br::selection{background:#E81E8C}        /* no field to draw it: a plain hot highlight */
+  body.nogl .ln::selection,body.nogl .ln .br::selection{background:var(--pick)}        /* no field to draw it: a plain hot highlight */
   /* the small titles can be selected too */
   ::selection{background:var(--amber);color:var(--ink)}
   #hist li,#np{pointer-events:auto;user-select:text;-webkit-user-select:text;cursor:text}
@@ -239,7 +255,10 @@
   @media (max-width:760px){
     :root{--volw:40px;--gl:0px;--gr:var(--gut);--volx:calc(var(--pad)/2 - var(--gap)/4)}
     body{grid-template-columns:minmax(0,1fr) var(--volw);grid-template-rows:auto minmax(0,1fr) auto auto;row-gap:12px}
-    header{padding-bottom:0}
+    header{padding-bottom:0;flex-wrap:wrap;row-gap:8px}
+    /* no room beside the name here: the vibe takes a row of its own under it */
+    #vibe{order:3;flex:1 0 100%;margin:0;padding:8px 10px 8px 1.4em}
+    #vibe .run{flex:1;width:auto}
     #block{grid-column:1}
     #side{grid-column:1;grid-row:3;display:grid;grid-template-columns:108px minmax(0,1fr);gap:10px;align-items:start}
     .art{--r:12px;--sh:5px;width:108px}
@@ -252,7 +271,7 @@
     .hint{display:none!important}
     #cue{flex:1 0 100%;text-align:center}
     .tag{font-size:9px;padding:2px 3px}
-    .hz{bottom:auto;top:calc(var(--pad) + 50px)}       /* up top here: a deep cut would land on them below */
+    .hz{bottom:auto;top:calc(var(--pad) + 84px)}       /* up top here: a deep cut would land on them below */
     #np{display:none!important}
   }
 </style>
@@ -263,6 +282,7 @@
 
   <header>
     <b class="wm">Radio Change</b>
+    <div id="vibe" class="pill hit lab" role="slider" tabindex="0" aria-label="Vibe" aria-orientation="horizontal"><span>Vibe</span><div class="run"><b></b></div></div>
     <span id="np" class="pill"></span>
     <span class="st pill lab"><i></i><span id="st">On air</span></span>
   </header>
@@ -324,6 +344,8 @@
      ground   big flat fluid shapes; hot when sound is running, dusk when not.
               Ten columns are lit to each EQ band's level, and one more, behind
               the volume fader, to the level going out
+     vibe     the colours of all of it, on a slider in the header: from the
+              brightest, by way of the warm ones, to the dark
      song     artist and title stretched edge to edge, cover, last songs played
      sound    no play button: the page goes on air by itself (or on the first
               touch, where the browser insists), and there is only mute
@@ -336,12 +358,129 @@ const block=$("#block"),meas=$("#measure"),cv=$("#c"),muteBtn=$("#mute");
 const NB=radio.NB;
 radio.keepAlive=true;               // no play button here, so a lost signal redials itself
 
-/* flat stand-in for a missing cover: two colours and an initial */
-const TILES=[["#FF4A1C","#1A1247"],["#FFD21F","#17110F"],["#00A870","#0E1F3D"],["#FF6FAE","#2A0F6B"],
-             ["#5B2BE0","#FFE9C9"],["#D8FF3E","#0F3B2C"],["#16B4F2","#2B0B3A"],["#E81E6E","#FFF3D6"]];
+/* ================= the vibe =================
+   Everything coloured on the page comes from one of these. The slider in the
+   header runs through them in this order: the brightest first, then the warm
+   ones, then the dark. CHANGE is the station's own, and where a first visit
+   starts.
+     hot    the field's seven colours when sound is running (ink is the eighth)
+     dusk   the three it falls back to when there is none
+     bar    the equaliser's ten bars, bass to treble
+     chip   the three that stand for it on the slider
+     tiles  stand-ins for a missing cover: made from hot where none are given */
+const VIBES=[
+  /* paint on a wall: lemon, tangerine and coral against raspberry and purple, and a splash of teal */
+  {id:"pop",name:"Pop",ink:"#2A1422",cream:"#FFF4D8",amber:"#FBD23B",live:"#F4553F",
+    hot:["#F4553F","#F88B2A","#FBD23B","#E0317A","#9A45B0","#5B3A9E","#35BDB4"],
+    dusk:["#5A2D82","#B52E63","#2A8F8C"],
+    bar:["#FBD23B","#F9AE32","#F88B2A","#F66F35","#F4553F","#E0317A","#BC3A92","#9A45B0","#5B3A9E","#35BDB4"],
+    chip:["#FBD23B","#E0317A","#35BDB4"]},
+  {id:"change",name:"Change",ink:"#1C0836",cream:"#FFF3DC",amber:"#FFC93C",live:"#FF4A3A",
+    hot:["#FF3B2E","#FF8A1E","#FFC93C","#E81E8C","#6A1FE0","#1230C8","#00A896"],
+    dusk:["#2A1AA0","#B0126F","#4A1CB8"],
+    bar:["#FF8A1E","#FF6A1F","#FF3B2E","#F0286A","#E81E8C","#B01FC0","#6A1FE0","#1E36D6","#0B7BD6","#00A896"],
+    chip:["#FF8A1E","#E81E8C","#1230C8"],
+    tiles:[["#FF4A1C","#1A1247"],["#FFD21F","#17110F"],["#00A870","#0E1F3D"],["#FF6FAE","#2A0F6B"],
+           ["#5B2BE0","#FFE9C9"],["#D8FF3E","#0F3B2C"],["#16B4F2","#2B0B3A"],["#E81E6E","#FFF3D6"]]},
+  /* the station's own with the blues and the teal taken out: its warm half, and purples for the dark */
+  {id:"sundown",name:"Sundown",ink:"#2B0B2E",cream:"#FFF2DC",amber:"#FFCB3D",live:"#FF5A36",
+    hot:["#FF5A36","#FF9124","#FFCB3D","#F0307F","#9A2BD0","#55199A","#C2185B"],
+    dusk:["#5A1A86","#C22E62","#8A1A4A"],
+    bar:["#FFA42A","#FF8A26","#FF7030","#FF5A36","#F5405C","#F0307F","#C92CA8","#9A2BD0","#7422B8","#55199A"],
+    chip:["#FF9124","#F0307F","#9A2BD0"]},
+  /* all fire: gold through orange and vermilion to pink, plum and wine. No blue, no green */
+  {id:"ember",name:"Ember",ink:"#2A0714",cream:"#FFF1DA",amber:"#FFC83A",live:"#FF5A2E",
+    hot:["#FF4322","#FF8419","#FFC83A","#FF4F8B","#B3167A","#6E0F3A","#C8421A"],
+    dusk:["#7A1526","#C25A12","#4A0C36"],
+    bar:["#FFA126","#FF8419","#FF6820","#FF4D22","#F03538","#EE2F62","#F03C8A","#CC2288","#A3157A","#7A1466"],
+    chip:["#FFC83A","#FF4322","#6E0F3A"]},
+  /* after hours: crimson, wine and deep violet down to midnight, and one glow of gold */
+  {id:"night",name:"Night",ink:"#0C0616",cream:"#F6EBDA",amber:"#E2A62E",live:"#E5432F",
+    hot:["#B0182E","#D0561C","#E2A62E","#8A1552","#4A1784","#1D2173","#0F5560"],
+    dusk:["#1B1550","#5C1034","#2B1158"],
+    bar:["#E2A62E","#D97F24","#D0561C","#C03524","#B0182E","#9D1640","#8A1552","#6A166B","#4A1784","#1D2173"],
+    chip:["#B0182E","#4A1784","#1D2173"]},
+];
+const HOME="change";
+const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
+const hex=c=>"#"+c.map(v=>Math.round(v*255).toString(16).padStart(2,"0")).join("");
+const light=h=>{const c=rgb(h);return .299*c[0]+.587*c[1]+.114*c[2];};
+const CSSV=["ink","cream","amber","live","pick","d1","d2"];
+VIBES.forEach(v=>{
+  const d=v.dusk,f=list=>Float32Array.from(list.flatMap(rgb));
+  if(!v.tiles)v.tiles=v.hot.map(c=>[c,light(c)>.4?v.ink:v.cream]).concat([[d[0],v.amber]]);
+  /* the same colours as the shader takes them, and as the stylesheet does */
+  v.f={ink:f([v.ink]),hot:f([v.ink].concat(v.hot)),dusk:f([v.ink,d[0],d[1],d[0],v.ink,d[2],d[1],d[0]]),bar:f(v.bar)};
+  v.css=[v.ink,v.cream,v.amber,v.live,v.hot[3],d[0],d[1]].map(rgb);
+});
+/* what the shader is drawing with, and what it is on its way to: a change of vibe runs in, it does not cut */
+const field={ink:new Float32Array(3),hot:new Float32Array(24),dusk:new Float32Array(24),bar:new Float32Array(30)};
+const fieldTo={ink:new Float32Array(3),hot:new Float32Array(24),dusk:new Float32Array(24),bar:new Float32Array(30)};
+const vibeEl=$("#vibe"),runEl=vibeEl.querySelector(".run");
+let vibe=null,vibeAt=0;
+
+/* flat stand-in for a missing cover: two colours and an initial, from the vibe on show */
 function tileFor(text){
   let h=0;for(const c of text)h=(h*31+c.codePointAt(0))>>>0;
-  return TILES[h%TILES.length];
+  return vibe.tiles[h%vibe.tiles.length];
+}
+function paintTile(el){
+  const t=tileFor(el.dataset.tile);
+  el.style.setProperty("--b",t[0]);el.style.setProperty("--f",t[1]);
+}
+/* x is a place on the slider. A whole number is a vibe; anything between two
+   is a mix of them, which is what a drag passes through on its way. */
+function setVibe(x,cut){
+  const n=VIBES.length;
+  vibeAt=Math.max(0,Math.min(n-1,x));
+  const i=Math.min(n-2,Math.floor(vibeAt)),t=vibeAt-i,a=VIBES[i],b=VIBES[i+1];
+  for(const k in field){
+    const to=fieldTo[k],p=a.f[k],q=b.f[k];
+    for(let j=0;j<to.length;j++)to[j]=p[j]+(q[j]-p[j])*t;
+    if(cut)field[k].set(to);
+  }
+  const css=document.documentElement.style;
+  CSSV.forEach((name,j)=>css.setProperty("--"+name,hex(a.css[j].map((c,m)=>c+(b.css[j][m]-c)*t))));
+  runEl.style.setProperty("--x",vibeAt.toFixed(3));
+  const near=VIBES[Math.round(vibeAt)];
+  if(near===vibe)return;
+  vibe=near;
+  vibeEl.setAttribute("aria-valuenow",VIBES.indexOf(vibe));vibeEl.setAttribute("aria-valuetext",vibe.name);
+  document.querySelectorAll("[data-tile]").forEach(paintTile);
+}
+/* the slider only ever rests on a vibe, and that one is kept for the next visit */
+function restVibe(x){
+  setVibe(Math.round(x));
+  try{localStorage.setItem("radiochange.vibe",vibe.id);}catch(e){}
+}
+VIBES.forEach(v=>{
+  const cell=document.createElement("i");
+  cell.title=v.name;
+  ["a","b","c"].forEach((n,j)=>cell.style.setProperty("--"+n,v.chip[j]));
+  runEl.insertBefore(cell,runEl.lastChild);
+});
+runEl.style.setProperty("--n",VIBES.length);
+vibeEl.setAttribute("aria-valuemin",0);vibeEl.setAttribute("aria-valuemax",VIBES.length-1);
+vibeEl.addEventListener("pointerdown",e=>{
+  const r=runEl.getBoundingClientRect();
+  if(e.clientX<r.left-8||e.clientX>r.right+8)return;     // the label is not part of the run
+  vibeEl.setPointerCapture(e.pointerId);vibeEl.classList.add("drag");
+  const at=ev=>setVibe((ev.clientX-r.left)/r.width*VIBES.length-.5);
+  at(e);
+  const up=()=>{
+    vibeEl.classList.remove("drag");restVibe(vibeAt);
+    ["pointermove","pointerup","pointercancel"].forEach((t,j)=>vibeEl.removeEventListener(t,j?up:at));
+  };
+  ["pointermove","pointerup","pointercancel"].forEach((t,j)=>vibeEl.addEventListener(t,j?up:at));
+});
+vibeEl.addEventListener("keydown",e=>{
+  const step={ArrowLeft:-1,ArrowRight:1}[e.key];
+  if(step){e.preventDefault();restVibe(Math.round(vibeAt)+step);}
+});
+{
+  let id=null;
+  try{id=localStorage.getItem("radiochange.vibe");}catch(e){}
+  setVibe(VIBES.findIndex(v=>v.id===(VIBES.some(w=>w.id===id)?id:HOME)),true);
 }
 
 /* ================= the ground ================= */
@@ -357,13 +496,9 @@ uniform vec4 uSel[8];
 uniform int uSelN;
 out vec4 o;
 
-const vec3 INK=vec3(.110,.031,.212);
-const vec3 HOT[8]=vec3[8](
-  vec3(.110,.031,.212), vec3(1.,.231,.180), vec3(1.,.541,.118), vec3(1.,.788,.235),
-  vec3(.910,.118,.549), vec3(.416,.122,.878), vec3(.071,.188,.784), vec3(0.,.659,.588));
-const vec3 DUSK[8]=vec3[8](
-  vec3(.110,.031,.212), vec3(.165,.102,.627), vec3(.690,.071,.435), vec3(.165,.102,.627),
-  vec3(.110,.031,.212), vec3(.290,.110,.720), vec3(.690,.071,.435), vec3(.165,.102,.627));
+/* the vibe on show (see VIBES). uBar is the equaliser's ten bars: the field's
+   own colours laid out bass to treble */
+uniform vec3 uInk,uHot[8],uDusk[8],uBar[10];
 
 vec3 mod289(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec2 mod289(vec2 x){return x-floor(x*(1./289.))*289.;}
@@ -387,13 +522,9 @@ float fbm(vec2 q){
   for(int i=0;i<2;i++){s+=a*snoise(q);q=q*2.03+vec2(17.3,9.1);a*=.34;}
   return s;
 }
-/* the equaliser's ten bars: the field's own colours laid out warm to cool, bass to treble */
-const vec3 BAR[10]=vec3[10](
-  vec3(1.,.541,.118), vec3(1.,.416,.122), vec3(1.,.231,.180), vec3(.941,.157,.416), vec3(.910,.118,.549),
-  vec3(.690,.122,.753), vec3(.416,.122,.878), vec3(.118,.212,.839), vec3(.043,.482,.839), vec3(0.,.659,.588));
 vec3 col(float i,float hot){
   int k=int(mod(i,8.));
-  return mix(DUSK[k],HOT[k],hot);
+  return mix(uDusk[k],uHot[k],hot);
 }
 void main(){
   float mn=min(uRes.x,uRes.y);
@@ -421,13 +552,13 @@ void main(){
   float lit=1.-step(mix(uOut,uBands[k],inside),st.y);
   float hot=uOn*lit;
   vec3 c=mix(col(i,hot),col(i+1.,hot),smoothstep(1.-aa,1.,e));
-  c=mix(c,INK,uOn*(1.-lit)*.3);
+  c=mix(c,uInk,uOn*(1.-lit)*.3);
   /* Selected text is highlighted by the field itself: inside the selection the
      same shapes are cut into many narrow bands and every hot colour races
      through them. It is always hot, sound or no sound. */
   float v2=f*15.+t*10.+(uv.x-uv.y)*5.;
   float i2=floor(v2),a2=max(fwidth(v2),1e-4)*1.1;
-  vec3 trip=mix(HOT[1+int(mod(i2,7.))],HOT[1+int(mod(i2+1.,7.))],smoothstep(1.-a2,1.,fract(v2)));
+  vec3 trip=mix(uHot[1+int(mod(i2,7.))],uHot[1+int(mod(i2+1.,7.))],smoothstep(1.-a2,1.,fract(v2)));
   float sel=0.;
   for(int j=0;j<8;j++){
     if(j>=uSelN)break;
@@ -438,10 +569,10 @@ void main(){
   /* With the equaliser open the field settles, as on the test card: each band is
      one flat bar of its own colour, bright up to its level and a dark tint of
      itself above. The volume's strip goes plain ink. A hairline parts the bars. */
-  vec3 bar=mix(mix(BAR[k],INK,.76),BAR[k],lit);
-  c=mix(c,mix(INK,bar,inside),uDesk);
+  vec3 bar=mix(mix(uBar[k],uInk,.76),uBar[k],lit);
+  c=mix(c,mix(uInk,bar,inside),uDesk);
   float edge=min(fract(fx),1.-fract(fx))*uRes.x*(uX1-uX0)*.1;
-  o=vec4(mix(c,INK,uDesk*inside*(1.-step(1.6,edge))),1.);
+  o=vec4(mix(c,uInk,uDesk*inside*(1.-step(1.6,edge))),1.);
 }`;
 let prog=null;const U={};
 function sh(type,src){
@@ -460,7 +591,7 @@ if(gl){
     gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
     const loc=gl.getAttribLocation(prog,"p");
     gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    ["uRes","uC","uT","uBass","uTreb","uOn","uX0","uX1","uDesk","uOut","uBands","uSel","uSelN"].forEach(n=>{U[n]=gl.getUniformLocation(prog,n);});
+    ["uRes","uC","uT","uBass","uTreb","uOn","uX0","uX1","uDesk","uOut","uBands","uSel","uSelN","uInk","uHot","uDusk","uBar"].forEach(n=>{U[n]=gl.getUniformLocation(prog,n);});
   }catch(e){console.error(e);prog=null;}
 }
 let scale=1,x0=0,x1=1;
@@ -711,8 +842,8 @@ const FLIP={duration:300+TURN*2.2,easing:"cubic-bezier(.3,0,.45,1)",fill:"forwar
 const ROUND=TURN%360===0;
 const handOver=(at,a,b)=>[{opacity:a},{opacity:a,offset:at/TURN-.001},{opacity:b,offset:at/TURN},{opacity:b}];
 function makeFace(key,letter,img){
-  const f=document.createElement("div"),ph=document.createElement("div"),tile=tileFor(key||"Radio Change");
-  ph.className="ph";ph.style.setProperty("--b",tile[0]);ph.style.setProperty("--f",tile[1]);ph.textContent=letter;
+  const f=document.createElement("div"),ph=document.createElement("div");
+  ph.className="ph";ph.dataset.tile=key||"Radio Change";paintTile(ph);ph.textContent=letter;
   f.append(ph);
   if(img){img.alt="";f.append(img);}
   return f;
@@ -831,8 +962,7 @@ const PILL_IN=[{opacity:0},{opacity:1,offset:.3},{opacity:1}];   // a row that w
 const histRows=()=>Array.from(histEl.children).filter(li=>li.song);
 function makeRow(p){
   const li=document.createElement("li"),th=document.createElement("div"),tx=document.createElement("div");
-  const tile=tileFor(p.text);
-  th.className="th";th.style.setProperty("--b",tile[0]);th.style.setProperty("--f",tile[1]);
+  th.className="th";th.dataset.tile=p.text;paintTile(th);
   th.textContent=Array.from(p.artist||p.title)[0];
   tx.className="tx";
   const b=document.createElement("b"),s=document.createElement("span");
@@ -1113,7 +1243,7 @@ const phone=matchMedia("(pointer:coarse)");
 let swipe=null;
 addEventListener("pointerdown",e=>{
   const finger=e.pointerType==="touch"||(phone.matches&&e.button===0);
-  swipe=finger&&e.isPrimary&&!e.target.closest("#vol,.col,#presets,#act")
+  swipe=finger&&e.isPrimary&&!e.target.closest("#vol,.col,#presets,#act,#vibe")
     ?{id:e.pointerId,x:e.clientX,y:e.clientY,v:0,on:false,mouse:e.pointerType!=="touch"}:null;
 });
 document.addEventListener("selectstart",e=>{if(swipe&&swipe.mouse)e.preventDefault();});
@@ -1205,6 +1335,9 @@ function frame(now){
     gl.uniform1f(U.uT,T);gl.uniform1f(U.uBass,bass);gl.uniform1f(U.uTreb,treb);gl.uniform1f(U.uOn,onAmt);
     gl.uniform1f(U.uX0,x0);gl.uniform1f(U.uX1,x1);gl.uniform1f(U.uDesk,deskAmt);gl.uniform1f(U.uOut,out);
     gl.uniform1fv(U.uBands,levels);
+    /* the colours run toward the vibe on show */
+    for(const k in field){const a=field[k],b=fieldTo[k],m=Math.min(1,dt*6);for(let i=0;i<a.length;i++)a[i]+=(b[i]-a[i])*m;}
+    gl.uniform3fv(U.uInk,field.ink);gl.uniform3fv(U.uHot,field.hot);gl.uniform3fv(U.uDusk,field.dusk);gl.uniform3fv(U.uBar,field.bar);
     gl.uniform4fv(U.uSel,selRects);gl.uniform1i(U.uSelN,selN);
     gl.drawArrays(gl.TRIANGLES,0,3);
   }
