@@ -345,7 +345,7 @@ const SITE=/\s*[\(\[][^\)\]]*\b[a-z0-9-]+\.(com|net|org|pm|ru|info|me|cc|fm|to|b
    written (see holdsBoth): the tag, tidied, against the song it is. One number
    for both, to put up whenever the lookup or the matching changes: what was
    kept under an older one is thrown out. */
-const ART="radiochange.art12",READS="radiochange.reads12";
+const ART="radiochange.art13",READS="radiochange.reads13";
 let reads={};
 try{
   Object.keys(localStorage).forEach(k=>{
@@ -478,8 +478,9 @@ function poll(){
    namesake's sleeve gets shown. A title that turns out to hold the act as well
    as the song is read that way. If the song has no sleeve anywhere, a picture
    of the artist stands in. A name that looks misspelt is tried again as the
-   name it most likely is, and a double bill as the act billed first. A miss is
-   remembered too, so nothing is looked up twice. */
+   name it most likely is, and a double bill as the act billed first. A name
+   given with its own initials is looked up without them. A miss is remembered
+   too, so nothing is looked up twice. */
 let artStore={};
 try{artStore=JSON.parse(localStorage.getItem(ART)||"{}")||{};}catch(e){}
 const artWait={};
@@ -631,6 +632,18 @@ async function findLead(artist){
   }
   return "";
 }
+/* "MSG Mcauley Schenker Group", "Electric Light Orchestra (ELO)": a name given
+   with its own initials, in front or behind. The catalogues have the name
+   alone, and a search with the initials in it finds nothing. */
+function sansInitials(artist){
+  const w=artist.split(" ").filter(Boolean);
+  const initials=x=>norm(x.join(" ")).split(" ").map(p=>p[0]||"").join("");
+  for(const [short,rest] of [[w[0],w.slice(1)],[w[w.length-1],w.slice(0,-1)]]){
+    const s=flat(short);
+    if(s.length>1&&s===initials(rest))return rest.join(" ");
+  }
+  return artist;
+}
 /* the song's own sleeve, from whichever service has it: a url, "" or null (no answer).
    With `read`, the title may turn out to hold the act as well as the song, and
    read(names) is told when the sleeve was found by reading it so. A second go
@@ -675,12 +688,13 @@ async function findSleeve(artist,title,read){
 async function artLookup(t){
   /* "(Original Version)", "[Remastered]", "feat. X" only hurt the search */
   const title=bare(t.title).replace(/\s+(feat|ft)\.? .*$/i,"").trim()||t.title;
+  const artist=sansInitials(t.artist);
   let sure=true,names=null;
-  let u=await findSleeve(t.artist,title,n=>{names=n;});
+  let u=await findSleeve(artist,title,n=>{names=n;});
   if(u)return {u:u,sure:true,names:names};
   if(u===null)sure=false;
-  let who=await findArtist(t.artist);
-  if(who==="")who=await findLead(t.artist);
+  let who=await findArtist(artist);
+  if(who==="")who=await findLead(artist);
   if(!who)return {u:"",sure:sure&&who!==null};   // nobody fits, or no answer
   if(who.guessed){
     u=await findSleeve(who.name,title);
@@ -720,12 +734,14 @@ const FAKE=["Queens of the Stone Age - No One Knows","The Smashing Pumpkins - Bu
             "U2 - One","PJ Harvey - Rid of Me","Rage Against the Machine - Killing in the Name","Yeah Yeah Yeahs - Maps"];
 /* the skip test's running order: long names and short, one with no sleeve
    anywhere (it gets the artist's picture), one tagged wrong, one nobody has,
-   and one with the act in the title (it is renamed once it has been looked up) */
+   one with the act in the title (it is renamed once it has been looked up),
+   and one with the act's initials ahead of its name */
 const SKIPS=["Deep Purple - Black Night","Michael Jackson - Remember The Time","U2 - One",
              "The Smashing Pumpkins - Bullet with Butterfly Wings","L.A. Guns - Cold Gin",
              "Queens of the Stone Age - No One Knows","B.Tyler - Total Eclipse ot the Heart",
              "Soul Asylum - 99%","Rage Against the Machine - Killing in the Name",
-             "The House Band - A Song With No Cover","I_m_in_love - Counting_Crows_Accidentally_In_Love_"];
+             "The House Band - A Song With No Cover","I_m_in_love - Counting_Crows_Accidentally_In_Love_",
+             "MSG Mcauley Schenker Group - Time"];
 let fakeI=0;
 function begin(){
   if(DEMO||SKIP){
