@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radio Change: the cover's edge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet" />
+<style>
+  /* MOCKUP: what to do about a cover that comes with an outline of its own.
+     The outline is square and the slot's corners are round, so the slot cuts
+     the outline short at every corner. Two ways to lose it, each next to the
+     slot as it is now: a border on the inside of the slot that lies over the
+     cover's edge, or the picture made a little bigger than the slot so that
+     its edge falls outside. Both take the same strip off each side (--eat, in
+     hundredths of the slot's width), so they can be judged like for like. */
+  :root{
+    --ink:#1C0836;--cream:#FFF3DC;--amber:#FFC93C;
+    --eat:2;
+    /* the slot as the player has it on a computer; with .phone, as it has it on a phone */
+    --size:288px;--r:16px;--sh:8px;
+    --pad:clamp(14px,2.2vw,34px);
+    --gap:clamp(14px,2vw,30px);
+    --w:var(--size);
+  }
+  :root.phone{--size:108px;--r:12px;--sh:5px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--ink)}
+  body{background:var(--ink);color:var(--cream);font-family:Archivo,"Arial Narrow",Impact,sans-serif;font-stretch:100%;
+    padding:0 var(--pad) var(--pad);-webkit-font-smoothing:antialiased}
+  .pill{background:var(--ink);border-radius:999px}
+  .lab{font-weight:800;font-stretch:112%;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+  .intro,#bar,main{max-width:1240px;margin-inline:auto}
+
+  .intro{padding:var(--pad) 0 4px}
+  h1{font-weight:900;font-stretch:125%;font-size:clamp(22px,3vw,40px);line-height:1;letter-spacing:.02em;text-transform:uppercase}
+  .intro p{margin-top:12px;max-width:72ch;font-size:15px;line-height:1.5;opacity:.85}
+
+  /* ---------- the controls, and a name over each column: they stay in sight ---------- */
+  #bar{position:sticky;top:0;z-index:5;background:var(--ink);padding:14px 0 12px}
+  #ctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px 30px}
+  .ctl{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;min-height:34px;white-space:nowrap}
+  #eat{-webkit-appearance:none;appearance:none;width:clamp(150px,22vw,260px);height:24px;background:none;cursor:ew-resize;outline:0}
+  #eat::-webkit-slider-runnable-track{height:2px;background:rgb(from var(--cream) r g b/.45)}
+  #eat::-moz-range-track{height:2px;background:rgb(from var(--cream) r g b/.45)}
+  #eat::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-8px;border-radius:50%;
+    background:var(--amber);box-shadow:0 0 0 3px var(--ink)}
+  #eat::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px var(--ink)}
+  #eat:focus-visible{box-shadow:0 0 0 2px var(--amber);border-radius:999px}
+  #eatOut{color:var(--amber);white-space:nowrap}
+  .ctl button{font-family:inherit;cursor:pointer;background:none;color:var(--cream);border:0;border-radius:999px;padding:.8em 1.1em;white-space:nowrap}
+  .ctl button:hover{color:var(--amber)}
+  .ctl button.act{background:var(--cream);color:var(--ink)}
+  .heads{margin-top:12px}
+  .heads span{text-align:center;color:var(--amber)}
+
+  /* ---------- one cover to a row, on one of the page's own colours ---------- */
+  main{display:flex;flex-direction:column;gap:12px}
+  .row,.heads{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,var(--w));column-gap:var(--gap);align-items:center;
+    padding-inline:var(--gap) calc(var(--gap) + var(--sh))}
+  .row{background:var(--b);color:var(--f);border-radius:22px;padding-block:var(--gap) calc(var(--gap) + var(--sh))}
+  .what .pill{display:inline-block;color:var(--amber);padding:.6em .9em;white-space:nowrap}
+  .what p{margin-top:12px;font-weight:600;font-size:15px;line-height:1.4}
+  .what small{display:block;margin-top:8px;font-weight:500;font-size:12px;line-height:1.3;opacity:.8}
+
+  /* the slot, as the player has it */
+  .art{position:relative;width:var(--w);aspect-ratio:1;border-radius:var(--r);overflow:hidden;
+    background:var(--ink);box-shadow:var(--sh) var(--sh) 0 var(--ink);container-type:inline-size}
+  .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  /* one: a border on the inside of the slot. The slot is ink under the picture
+     already, so the picture is cut back to let that show. (A border laid over
+     the picture lets a hairline of the cover's outline through at the round corners.) */
+  .art.border img{clip-path:inset(calc(var(--eat)*1cqw) round max(0px,var(--r) - var(--eat)*1cqw))}
+  /* two: the picture bigger than the slot, by that much on every side */
+  .art.zoom img{transform:scale(calc(1/(1 - var(--eat)/50)))}
+
+  /* no room for the words beside the covers: they go above, and the covers share the width */
+  @media (max-width:1180px){
+    :root{--w:min(var(--size),calc((100vw - 2*var(--pad) - 4*var(--gap) - 8px)/3))}
+    .row,.heads{grid-template-columns:repeat(3,var(--w));justify-content:space-between}
+    .what{grid-column:1/-1;margin-bottom:var(--gap)}
+    .heads i{display:none}
+    .heads span{letter-spacing:.08em}
+  }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>The cover's edge</h1>
+    <p>Some covers come with an outline of their own. It is square and the slot's corners are round, so the corners cut it short.
+       Two ways to lose it, beside the slot as it is now. Both take the same strip off every side of the cover.</p>
+  </div>
+
+  <div id="bar">
+    <div id="ctl">
+      <label class="ctl"><span class="lab">Taken off each side</span>
+        <input id="eat" type="range" min="0" max="5" step="0.25" value="2" />
+        <output id="eatOut" class="lab" for="eat"></output></label>
+      <div class="ctl" role="group" aria-label="Size of the cover"><span class="lab">Cover as on a</span>
+        <button class="lab act" data-size="">Computer</button><button class="lab" data-size="phone">Phone</button></div>
+    </div>
+    <div class="heads lab"><i></i><span>As it is now</span><span>Border inside</span><span>Picture magnified</span></div>
+  </div>
+
+  <main id="rows"></main>
+
+<script>
+const $=s=>document.querySelector(s);
+/* The covers, each here for what it has at its edge. b and f are the colour it
+   stands on and the colour of the words there; u is where it lives in the
+   iTunes artwork store, which is where the player's covers come from. */
+const COVERS=[
+  {b:"#6A1FE0",f:"#FFF3DC",tag:"Thin white outline",who:"Sons Of The East",song:"Come Away (Unplugged)",
+   note:"The cover that started this. The outline runs right round, at the very edge.",
+   u:"Music123/v4/c4/79/05/c4790567-d77c-5667-da4c-074933812add/TI84227_cover.jpg"},
+  {b:"#FF8A1E",f:"#1C0836",tag:"Line inside the edge",who:"Eagles",song:"Hotel California",
+   note:"A blue line, with a dark margin outside it. The line is what has to go.",
+   u:"Music115/v4/88/16/2c/88162c3d-46db-8321-61f3-3a47404cfe76/075596050920.jpg"},
+  {b:"#FFC93C",f:"#1C0836",tag:"Thick black frame",who:"Deep Purple",song:"Black Night",
+   note:"The widest frame of the lot, and dark already.",
+   u:"Music118/v4/43/77/e3/4377e3fa-9564-d351-dc94-706a37980e40/603497866786.jpg"},
+  {b:"#1230C8",f:"#FFF3DC",tag:"Lettering at the edge",who:"The Clash",song:"London Calling",
+   note:"No outline. LONDON runs down the left side and CALLING along the bottom: what is taken off comes off the letters.",
+   u:"Music125/v4/45/d7/17/45d71740-b204-de23-3f9e-f2f823296f1d/886443520721.jpg"},
+  {b:"#00A896",f:"#1C0836",tag:"Lettering at the top",who:"Tom Petty and the Heartbreakers",song:"Free Fallin'",
+   note:"No outline. The name sits hard against the top.",
+   u:"Music112/v4/78/61/dd/7861dd44-f796-08ea-c8ff-7f8a12a86db1/15UMGIM69649.rgb.jpg"},
+  {b:"#E81E8C",f:"#1C0836",tag:"White sleeve",who:"Pink Floyd",song:"Wish You Were Here",
+   note:"No outline, and nothing near the edge. What each way does to a pale cover.",
+   u:"Music211/v4/aa/e0/ab/aae0ab6a-d906-a189-81bf-70b56aa43f7a/886445635843.jpg"},
+  {b:"#FF3B2E",f:"#1C0836",tag:"Full picture",who:"Nirvana",song:"Come As You Are",
+   note:"The ordinary case: a picture to the edge, and nothing there to lose.",
+   u:"Music115/v4/95/fd/b9/95fdb9b2-6d2b-92a6-97f2-51c1a6d77f1a/00602527874609.rgb.jpg"},
+];
+const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
+COVERS.forEach(c=>{
+  const row=el("section","row"),what=el("div","what");
+  row.style.setProperty("--b",c.b);row.style.setProperty("--f",c.f);
+  what.append(el("span","pill lab",c.tag),el("p","",c.note),el("small","",c.who+": "+c.song));
+  row.append(what);
+  ["","border","zoom"].forEach(way=>{
+    const art=el("div",("art "+way).trim()),img=new Image();
+    img.alt="";img.src="https://is1-ssl.mzstatic.com/image/thumb/"+c.u+"/600x600bb.jpg";
+    art.append(img);row.append(art);
+  });
+  $("#rows").append(row);
+});
+
+/* how much is taken off, said three ways: the share of the width, what that
+   makes the border on the cover on show, and how big it makes the picture */
+const eat=$("#eat"),out=$("#eatOut");
+const num=v=>String(Math.round(v*10)/10);
+function paint(){
+  const e=+eat.value,w=$(".art").clientWidth;
+  document.documentElement.style.setProperty("--eat",e);
+  out.textContent=e?e+"% · border "+num(w*e/100)+" px · picture "+num(100/(1-e/50))+"%":"Nothing";
+}
+eat.addEventListener("input",paint);
+document.querySelectorAll("[data-size]").forEach(b=>b.addEventListener("click",()=>{
+  document.documentElement.className=b.dataset.size;
+  document.querySelectorAll("[data-size]").forEach(x=>x.classList.toggle("act",x===b));
+  paint();
+}));
+addEventListener("resize",paint);
+/* ?eat=3 and ?phone in the address open the page set that way */
+const Q=new URLSearchParams(location.search);
+if(Q.has("eat"))eat.value=Q.get("eat");
+if(Q.has("phone"))$("[data-size=phone]").click();
+paint();
+</script>
+</body>
+</html>

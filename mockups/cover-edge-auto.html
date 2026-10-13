@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radio Change: the cover's edge, found by the page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet" />
+<style>
+  /* MOCKUP: the page finds a cover's outline for itself. It follows on from
+     cover-edge.html, where the picture was magnified by a set amount whatever
+     the cover. Here each cover is looked at as it arrives (see outline, in the
+     script): one with an outline all round is magnified by just enough to lose
+     it, up to a limit, and any other is left as it is. Every cover is shown
+     twice, as it is now and as the page would show it. */
+  :root{
+    --ink:#1C0836;--cream:#FFF3DC;--amber:#FFC93C;
+    --r:16px;--sh:8px;
+    --pad:clamp(14px,2.2vw,34px);
+    --gap:clamp(14px,2vw,30px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--ink)}
+  body{background:var(--ink);color:var(--cream);font-family:Archivo,"Arial Narrow",Impact,sans-serif;font-stretch:100%;
+    padding:0 var(--pad) var(--pad);-webkit-font-smoothing:antialiased}
+  .pill{background:var(--ink);border-radius:999px}
+  .lab{font-weight:800;font-stretch:112%;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+  .intro,#bar,main{max-width:1370px;margin-inline:auto}
+
+  .intro{padding:var(--pad) 0 4px}
+  h1{font-weight:900;font-stretch:125%;font-size:clamp(22px,3vw,40px);line-height:1;letter-spacing:.02em;text-transform:uppercase}
+  .intro p{margin-top:12px;max-width:72ch;font-size:15px;line-height:1.5;opacity:.85}
+
+  /* ---------- the limit, and what came of it: they stay in sight ---------- */
+  #bar{position:sticky;top:0;z-index:5;background:var(--ink);padding:14px 0 12px;
+    display:flex;flex-wrap:wrap;align-items:center;gap:6px 30px}
+  .ctl{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;min-height:34px;white-space:nowrap}
+  #reach{-webkit-appearance:none;appearance:none;width:clamp(150px,22vw,260px);height:24px;background:none;cursor:ew-resize;outline:0}
+  #reach::-webkit-slider-runnable-track{height:2px;background:rgb(from var(--cream) r g b/.45)}
+  #reach::-moz-range-track{height:2px;background:rgb(from var(--cream) r g b/.45)}
+  #reach::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-8px;border-radius:50%;
+    background:var(--amber);box-shadow:0 0 0 3px var(--ink)}
+  #reach::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px var(--ink)}
+  #reach:focus-visible{box-shadow:0 0 0 2px var(--amber);border-radius:999px}
+  #reachOut{color:var(--amber)}
+  #tally{line-height:1.6}
+
+  /* ---------- one cover to a card, on one of the page's own colours ---------- */
+  main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .card{background:var(--b);color:var(--f);border-radius:22px;
+    padding:var(--gap) calc(var(--gap) + var(--sh)) calc(var(--gap) + var(--sh)) var(--gap)}
+  .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-bottom:var(--gap)}
+  .top .pill{flex:none;color:var(--cream);padding:.6em .9em;white-space:nowrap}
+  .card.found .top .pill{color:var(--amber)}
+  .top small{font-weight:700;font-size:13px;line-height:1.3}
+  .card p{margin:calc(10px - var(--gap)) 0 var(--gap);font-weight:500;font-size:13px;line-height:1.4;opacity:.85}
+  .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap)}
+  figure{max-width:288px}
+  figcaption{margin-top:calc(var(--sh) + 10px);line-height:1.5}
+
+  /* the slot, as the player has it */
+  .art{position:relative;width:100%;aspect-ratio:1;border-radius:var(--r);overflow:hidden;
+    background:var(--ink);box-shadow:var(--sh) var(--sh) 0 var(--ink)}
+  .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  /* The picture bigger than the slot, and moved, so that what the outline takes
+     falls outside: --s is its size, and --x and --y how far its corner sits to
+     the left of the slot's and above it, all in hundredths of the slot's width. */
+  .art.zoom img{inset:auto;left:calc(var(--x,0)*-1%);top:calc(var(--y,0)*-1%);width:calc(var(--s,100)*1%);height:calc(var(--s,100)*1%)}
+
+  @media (max-width:760px){
+    main{grid-template-columns:minmax(0,1fr)}
+  }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>The cover's edge, found by the page</h1>
+    <p>The page looks at every cover as it arrives and measures the outline it came with, if it has one.
+       A cover with an outline all the way round is magnified by just enough to lose it, each side cut where its own
+       frame ends, and no side by more than the limit set here. A cover with no outline, with one wider than the
+       limit, or with one the page cannot make out on every side, is left as it is.</p>
+  </div>
+
+  <div id="bar">
+    <label class="ctl"><span class="lab">Take off a side no more than</span>
+      <input id="reach" type="range" min="0" max="6" step="0.5" value="4" />
+      <output id="reachOut" class="lab" for="reach"></output></label>
+    <output id="tally" class="lab"></output>
+  </div>
+
+  <main id="cards"></main>
+
+<script>
+const $=s=>document.querySelector(s);
+
+/* ================= the outline a cover comes with =================
+   outline(img,reach): what to cut off each side of a cover to lose the outline
+   it came with: [top, bottom, left, right], each a share of the cover's width,
+   or null when there is nothing to do. `reach` is the most any side loses (a
+   line over, at times). Of a frame wider than that, only the bands that end
+   inside the reach are cut, and a frame of one band is left whole.
+
+   The cover is drawn small and its pixels are read once. Each side is then
+   walked inwards from the edge, a line of pixels at a time, the corners left
+   out. A frame is a band of one colour that ends in a straight line, which is
+   to say that most of a line changes at once. It may be more than one band (a
+   dark margin and then a bright rule), and it ends where the picture begins.
+   A plain ground that the picture comes into a bit at a time is not a frame;
+   nor is a picture that runs to the edge; nor is a band with lettering on it,
+   where the band's colour comes back on the far side of the letters.
+
+   A cover has an outline when all four sides have a frame. Anything less (a
+   frame the page can make out on three sides only, a title printed in the top
+   of one) and the cover is left alone: half an outline taken off looks worse
+   than a whole one left on. Each side is then cut where its own frame ends.
+   The picture stays square, so top and bottom together lose as much as left
+   and right together; where one pair needs less than the other, what is over
+   comes off its wider side, which leaves the narrower one, where the picture
+   or its lettering comes nearest the edge, cut no deeper than its frame.
+
+   The cost is one small drawImage and N by N pixels read: a few milliseconds,
+   once for each cover. The picture has to come from a server that lets its
+   pixels be read, and be asked for that way (crossOrigin on the img). The
+   iTunes and Deezer picture stores both allow it. */
+const EDGE={
+  N:400,      // the cover is looked at this many pixels square, so one line is a quarter of a hundredth of its width
+  TOL:40,     // two pixels this near each other are one colour (red, green and blue apart, added up)
+  SAME:.9,    // a line is all one colour when this much of it is
+  HALF:.5,    // and has changed when no more than this much of it still is
+  SOFT:.85,   // the first line of the picture is still part frame when it is this much nearer the frame's colour than the next
+};
+const edgeCv=document.createElement("canvas");edgeCv.width=edgeCv.height=EDGE.N;
+const edgeCx=edgeCv.getContext("2d",{willReadFrequently:true});
+function outline(img,reach){
+  const N=EDGE.N,R=Math.round(N*reach);
+  let px;
+  try{edgeCx.drawImage(img,0,0,N,N);px=edgeCx.getImageData(0,0,N,N).data;}
+  catch(e){return null;}                         // a picture whose pixels may not be read
+  const a=Math.round(N*.1),b=N-a,n=b-a;          // a line runs from a to b: the corners are left out
+  /* where pixel i of line d is, for the top, the bottom, the left and the right */
+  const at=[(d,i)=>(d*N+i)*4,(d,i)=>((N-1-d)*N+i)*4,(d,i)=>(i*N+d)*4,(d,i)=>(i*N+N-1-d)*4];
+  const apart=(o,c)=>Math.abs(px[o]-c[0])+Math.abs(px[o+1]-c[1])+Math.abs(px[o+2]-c[2]);
+  /* the colour of a line, taken all together */
+  const mean=(s,d)=>{
+    let r=0,g=0,bl=0;
+    for(let i=a;i<b;i++){const o=at[s](d,i);r+=px[o];g+=px[o+1];bl+=px[o+2];}
+    return [r/n,g/n,bl/n];
+  };
+  /* how far a line is from the colour c, pixel for pixel */
+  const far=(s,d,c)=>{let t=0;for(let i=a;i<b;i++)t+=apart(at[s](d,i),c);return t/n;};
+  /* how much of a line is the colour c */
+  const share=(s,d,c)=>{let k=0;for(let i=a;i<b;i++)if(apart(at[s](d,i),c)<=EDGE.TOL)k++;return k/n;};
+  /* how many lines of frame a side has */
+  const side=s=>{
+    let c=mean(s,0),w=0;
+    if(share(s,0,c)<EDGE.SAME)return 0;          // the picture runs to the edge
+    for(let d=1;d<=R;d++){
+      const f=share(s,d,c);
+      if(f>=EDGE.SAME)continue;                  // the same band still
+      if(f>EDGE.HALF){
+        /* Part of the line has changed. An edge that falls between two lines of
+           pixels looks like this, and takes the rest with it on the next line; a
+           picture coming into a plain ground a bit at a time does not. */
+        if(d===R||share(s,d+1,c)>EDGE.HALF)return w;
+        continue;
+      }
+      w=d;                                       // most of it changed at once: a straight edge
+      const c2=mean(s,d);
+      if(share(s,d,c2)>=EDGE.SAME){c=c2;continue;}   // one more band of the frame
+      /* past it, the picture. Unless the band's colour comes back: then this
+         was lettering, or a rule, lying on a ground of that colour */
+      for(let k=d+1;k<=d+R;k++)if(share(s,k,c)>=EDGE.SAME)return 0;
+      return far(s,d,c)<EDGE.SOFT*far(s,d+1,c)?d+1:d;
+    }
+    return w;
+  };
+  const cut=[0,1,2,3].map(side);
+  if(cut.some(w=>!w))return null;
+  const most=Math.min(Math.max(cut[0]+cut[1],cut[2]+cut[3])+1,2*R);
+  [[0,1],[2,3]].forEach(([p,q])=>{
+    const spare=most-cut[p]-cut[q];
+    if(spare<=0)return;
+    if(cut[p]===cut[q]){cut[p]+=spare/2;cut[q]+=spare/2;return;}
+    const wide=cut[p]>cut[q]?p:q,thin=p+q-wide,take=Math.min(spare,R+1-cut[wide]);
+    cut[wide]+=take;cut[thin]+=spare-take;
+  });
+  return cut.map(w=>w/N);
+}
+
+/* ================= the covers =================
+   Picked out of the 272 that the measure was tried on: first the ones it
+   finds an outline on, then the ones it leaves alone, each with a word on
+   what it has at its edge. They live in the iTunes artwork store, which is
+   where the player's covers come from. */
+const COVERS=[
+  ["Sons Of The East","Come Away (Unplugged)","A thin white outline. The cover that started this.",
+   "Music123/v4/c4/79/05/c4790567-d77c-5667-da4c-074933812add/TI84227_cover.jpg"],
+  ["Deep Purple","A Fire in the Sky","A black frame.",
+   "Music118/v4/43/77/e3/4377e3fa-9564-d351-dc94-706a37980e40/603497866786.jpg"],
+  ["Dave Matthews Band","Live at Red Rocks 8.15.95","A white frame, with the title just inside it.",
+   "Music124/v4/40/b7/26/40b7262f-f388-77f5-670a-261ac4db7394/078636758725.jpg"],
+  ["The Rolling Stones","Tattoo You","A frame all round.",
+   "Music115/v4/f6/ce/84/f6ce84ab-f31b-51c6-125f-269a2fdd2639/21UMGIM70501.rgb.jpg"],
+  ["Emmelie de Forest","Acoustic Session","A white frame round a pale picture.",
+   "Music118/v4/30/90/37/3090373b-f84c-604f-f62e-0308b889f9ef/00602547012616.rgb.jpg"],
+  ["Mayra Alejandra Barajas","Unplugged","A white outline, wider on some sides than on others.",
+   "Music128/v4/74/18/35/7418359f-40ff-8491-7b8c-de8a4bb7751c/191924492054.jpg"],
+  ["Led Zeppelin","Mothership","A frame all round.",
+   "Music62/v4/7e/17/e3/7e17e33f-2efa-2a36-e916-7f808576cf6b/mzm.fyigqcbs.jpg"],
+  ["Scorpions","Savage Amusement","A thin frame.",
+   "Music124/v4/3f/23/ff/3f23ff06-634c-afa4-e755-1131e30afbb7/00042283296329.rgb.jpg"],
+  ["Metallica","The Metallica Blacklist","A black margin round a block of lettering. No outline to speak of, and taken for one all the same.",
+   "Music115/v4/ed/fe/b0/edfeb093-1dc2-86ff-db02-69912e370255/810083960050.png"],
+  ["Sons Of The East","Inappropriate Behaviour","A white frame with the title printed in the top of it. Nothing can come off the top without cutting the lettering.",
+   "Music124/v4/25/fc/e6/25fce6b4-ca2d-bb6b-eec2-c13632f8b4ae/TI88038_cover.jpg"],
+  ["Eagles","Hotel California","A thin blue rule, from a printed sleeve. It is too ragged for the page to be sure of on every side: an outline it misses.",
+   "Music115/v4/88/16/2c/88162c3d-46db-8321-61f3-3a47404cfe76/075596050920.jpg"],
+  ["The Beatles","Sgt. Pepper's Lonely Hearts Club Band","A frame a twentieth of the cover wide. Found when the limit is 5% or more.",
+   "Music125/v4/64/85/d2/6485d219-91ac-5481-2668-7eab1320436d/21UMGIM57007.rgb.jpg"],
+  ["The Clash","London Calling","No outline. Lettering hard against two edges.",
+   "Music125/v4/45/d7/17/45d71740-b204-de23-3f9e-f2f823296f1d/886443520721.jpg"],
+  ["Tom Petty and the Heartbreakers","Greatest Hits","No outline. Lettering hard against the top.",
+   "Music112/v4/78/61/dd/7861dd44-f796-08ea-c8ff-7f8a12a86db1/15UMGIM69649.rgb.jpg"],
+  ["Pink Floyd","Wish You Were Here","A white sleeve.",
+   "Music211/v4/aa/e0/ab/aae0ab6a-d906-a189-81bf-70b56aa43f7a/886445635843.jpg"],
+  ["Metallica","Metallica","A black sleeve, with the picture coming into it a bit at a time.",
+   "Music125/v4/9e/80/1b/9e801b06-67fa-0990-2d15-85480ad3cd46/850007452025.png"],
+  ["Pink Floyd","The Wall","Straight lines near the edge that are part of the picture.",
+   "Music221/v4/3e/17/ec/3e17ec6d-f980-c64f-19e0-a6fd8bbf0c10/886445635850.jpg"],
+  ["Nirvana","Nevermind","A picture to the edge.",
+   "Music115/v4/95/fd/b9/95fdb9b2-6d2b-92a6-97f2-51c1a6d77f1a/00602527874609.rgb.jpg"],
+];
+/* the colours a card stands on, and the colour of the words there */
+const GROUNDS=[["#6A1FE0","#FFF3DC"],["#FF8A1E","#1C0836"],["#FFC93C","#1C0836"],["#1230C8","#FFF3DC"],
+               ["#00A896","#1C0836"],["#E81E8C","#1C0836"],["#FF3B2E","#1C0836"]];
+const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
+const num=v=>String(Math.round(v*10)/10);
+const reach=$("#reach");
+let looks=0,took=0;                                // how many covers have been looked at, and how long that took in all
+
+const cards=COVERS.map(([who,album,note,u],i)=>{
+  const card={box:el("section","card"),verdict:el("span","pill lab"),after:el("figcaption","lab"),img:null,cut:null};
+  const [b,f]=GROUNDS[i%GROUNDS.length];
+  card.box.style.setProperty("--b",b);card.box.style.setProperty("--f",f);
+  const top=el("div","top"),pair=el("div","pair");
+  top.append(card.verdict,el("small","",who+": "+album));
+  ["","zoom"].forEach(way=>{
+    const fig=el("figure"),art=el("div",("art "+way).trim()),img=new Image();
+    img.alt="";img.crossOrigin="anonymous";
+    if(!way)img.onload=()=>{card.img=img;look(card);tell();};
+    img.src="https://is1-ssl.mzstatic.com/image/thumb/"+u+"/600x600bb.jpg";
+    art.append(img);
+    fig.append(art,way?card.after:el("figcaption","lab","As it is now"));
+    pair.append(fig);
+  });
+  card.box.append(top,el("p","",note),pair);
+  $("#cards").append(card.box);
+  return card;
+});
+
+/* look at one cover, and show it as the page would */
+function look(card){
+  const t=performance.now();
+  const cut=card.cut=outline(card.img,reach.value/100);
+  took+=performance.now()-t;looks++;
+  /* the picture's size, for the slot to show what is left of it, and where its corner goes */
+  const s=cut?1/(1-cut[2]-cut[3]):1,box=card.box.style;
+  box.setProperty("--s",s*100);box.setProperty("--x",cut?cut[2]*s*100:0);box.setProperty("--y",cut?cut[0]*s*100:0);
+  card.box.classList.toggle("found",!!cut);
+  card.verdict.textContent=cut?"Outline found":"Left alone";
+  card.after.textContent=cut?"Picture "+num(s*100)+"% · "+num(Math.max(...cut)*100)+"% off a side at most":"The same";
+}
+function tell(){
+  const e=+reach.value,seen=cards.filter(c=>c.img);
+  $("#reachOut").textContent=e?e+"% off a side · picture about "+num(100/(1-e/50))+"% at most":"Nothing";
+  $("#tally").textContent="Outline found on "+seen.filter(c=>c.cut).length+" of "+seen.length+
+    (looks?" · "+num(took/looks)+" ms to look at a cover, on this machine":"");
+}
+reach.addEventListener("input",()=>{cards.forEach(c=>{if(c.img)look(c);});tell();});
+/* ?reach=3 in the address opens the page set that way */
+const Q=new URLSearchParams(location.search);
+if(Q.has("reach"))reach.value=Q.get("reach");
+tell();
+</script>
+</body>
+</html>

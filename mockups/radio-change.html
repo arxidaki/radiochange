@@ -113,7 +113,13 @@
     background:var(--ink);box-shadow:var(--sh) var(--sh) 0 var(--ink);container-type:inline-size}
   .art .ph,#actArt .ph{position:absolute;inset:0;display:grid;place-items:center;background:var(--b,#5B2BE0);color:var(--f,#FFE9C9);
     font-weight:900;font-stretch:125%;font-size:62cqw;line-height:1;text-transform:uppercase}
-  .art img,#actArt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .art img,#actArt img{position:absolute;object-fit:cover}
+  /* A cover that came with an outline of its own is shown a little bigger than
+     its slot, and moved, so that the outline falls outside (see outline, in the
+     script): --s is its size, and --x and --y how far its corner sits to the
+     left of the slot's and above it, all in hundredths of the slot's width.
+     Any other cover fills its slot exactly, as do the small ones in the list. */
+  .art img,#actArt img,#hist .th img{left:calc(var(--x,0)*-1%);top:calc(var(--y,0)*-1%);width:calc(var(--s,100)*1%);height:calc(var(--s,100)*1%)}
   /* A face is what the cover slot shows: the sleeve, or a flat tile with an initial.
      A change of face is a flip. The cover turns side to side like a card on a
      pin through its top and bottom, old on one face and new on the other, to
@@ -139,7 +145,7 @@
   #hist li.ghost{position:absolute;left:0;right:0;pointer-events:none;background:none}
   #hist .th{position:relative;flex:none;width:38px;height:38px;border-radius:9px;overflow:hidden;
     background:var(--b);color:var(--f);display:grid;place-items:center;font-weight:900;font-size:19px;text-transform:uppercase}
-  #hist .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s}
+  #hist .th img{position:absolute;object-fit:cover;opacity:0;transition:opacity .4s}
   #hist .th img.on{opacity:1}
   #hist .tx{min-width:0}
   #hist b,#hist span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -867,6 +873,135 @@ function makeFace(key,letter,img){
   if(img){img.alt="";f.append(img);}
   return f;
 }
+/* ---------- the outline a cover comes with ----------
+   Some covers come with an outline of their own. It is square, and the slot's
+   corners are round, so the corners cut it short. Such a cover is shown a
+   little bigger than its slot, by just enough for the outline to fall outside.
+
+   outline(img,reach): what to cut off each side of a cover to lose its outline:
+   [top, bottom, left, right], each a share of the cover's width, or null when
+   there is nothing to do. `reach` is the most any side loses (a line over, at
+   times). Of a frame wider than that, only the bands that end inside the reach
+   are cut, and a frame of one band is left whole.
+
+   The cover is drawn small and its pixels are read once. Each side is then
+   walked inwards from the edge, a line of pixels at a time, the corners left
+   out. A frame is a band of one colour that ends in a straight line, which is
+   to say that most of a line changes at once. It may be more than one band (a
+   dark margin and then a bright rule), and it ends where the picture begins.
+   A plain ground that the picture comes into a bit at a time is not a frame;
+   nor is a picture that runs to the edge; nor is a band with lettering on it,
+   where the band's colour comes back on the far side of the letters.
+
+   A cover has an outline when all four sides have a frame. Anything less (a
+   frame that can be made out on three sides only, a title printed in the top
+   of one) and the cover is left alone: half an outline taken off looks worse
+   than a whole one left on. Each side is then cut where its own frame ends.
+   The picture stays square, so top and bottom together lose as much as left
+   and right together; where one pair needs less than the other, what is over
+   comes off its wider side, which leaves the narrower one, where the picture
+   or its lettering comes nearest the edge, cut no deeper than its frame.
+
+   The cost is one small drawImage and N by N pixels read: a few milliseconds,
+   once for each cover. The picture has to come from a server that lets its
+   pixels be read, and be asked for that way (see loadCover). The iTunes and
+   Deezer picture stores both allow it. */
+const REACH=.04;   // the most a side may lose: four hundredths of the cover's width
+const EDGE={
+  N:400,      // the cover is looked at this many pixels square, so one line is a quarter of a hundredth of its width
+  TOL:40,     // two pixels this near each other are one colour (red, green and blue apart, added up)
+  SAME:.9,    // a line is all one colour when this much of it is
+  HALF:.5,    // and has changed when no more than this much of it still is
+  SOFT:.85,   // the first line of the picture is still part frame when it is this much nearer the frame's colour than the next
+};
+const edgeCv=document.createElement("canvas");edgeCv.width=edgeCv.height=EDGE.N;
+const edgeCx=edgeCv.getContext("2d",{willReadFrequently:true});
+function outline(img,reach){
+  const N=EDGE.N,R=Math.round(N*reach);
+  let px;
+  try{edgeCx.drawImage(img,0,0,N,N);px=edgeCx.getImageData(0,0,N,N).data;}
+  catch(e){return null;}                         // a picture whose pixels may not be read
+  const a=Math.round(N*.1),b=N-a,n=b-a;          // a line runs from a to b: the corners are left out
+  /* where pixel i of line d is, for the top, the bottom, the left and the right */
+  const at=[(d,i)=>(d*N+i)*4,(d,i)=>((N-1-d)*N+i)*4,(d,i)=>(i*N+d)*4,(d,i)=>(i*N+N-1-d)*4];
+  const apart=(o,c)=>Math.abs(px[o]-c[0])+Math.abs(px[o+1]-c[1])+Math.abs(px[o+2]-c[2]);
+  /* the colour of a line, taken all together */
+  const mean=(s,d)=>{
+    let r=0,g=0,bl=0;
+    for(let i=a;i<b;i++){const o=at[s](d,i);r+=px[o];g+=px[o+1];bl+=px[o+2];}
+    return [r/n,g/n,bl/n];
+  };
+  /* how far a line is from the colour c, pixel for pixel */
+  const far=(s,d,c)=>{let t=0;for(let i=a;i<b;i++)t+=apart(at[s](d,i),c);return t/n;};
+  /* how much of a line is the colour c */
+  const share=(s,d,c)=>{let k=0;for(let i=a;i<b;i++)if(apart(at[s](d,i),c)<=EDGE.TOL)k++;return k/n;};
+  /* how many lines of frame a side has */
+  const side=s=>{
+    let c=mean(s,0),w=0;
+    if(share(s,0,c)<EDGE.SAME)return 0;          // the picture runs to the edge
+    for(let d=1;d<=R;d++){
+      const f=share(s,d,c);
+      if(f>=EDGE.SAME)continue;                  // the same band still
+      if(f>EDGE.HALF){
+        /* Part of the line has changed. An edge that falls between two lines of
+           pixels looks like this, and takes the rest with it on the next line; a
+           picture coming into a plain ground a bit at a time does not. */
+        if(d===R||share(s,d+1,c)>EDGE.HALF)return w;
+        continue;
+      }
+      w=d;                                       // most of it changed at once: a straight edge
+      const c2=mean(s,d);
+      if(share(s,d,c2)>=EDGE.SAME){c=c2;continue;}   // one more band of the frame
+      /* past it, the picture. Unless the band's colour comes back: then this
+         was lettering, or a rule, lying on a ground of that colour */
+      for(let k=d+1;k<=d+R;k++)if(share(s,k,c)>=EDGE.SAME)return 0;
+      return far(s,d,c)<EDGE.SOFT*far(s,d+1,c)?d+1:d;
+    }
+    return w;
+  };
+  const cut=[0,1,2,3].map(side);
+  if(cut.some(w=>!w))return null;
+  const most=Math.min(Math.max(cut[0]+cut[1],cut[2]+cut[3])+1,2*R);
+  [[0,1],[2,3]].forEach(([p,q])=>{
+    const over=most-cut[p]-cut[q];
+    if(over<=0)return;
+    if(cut[p]===cut[q]){cut[p]+=over/2;cut[q]+=over/2;return;}
+    const wide=cut[p]>cut[q]?p:q,thin=p+q-wide,take=Math.min(over,R+1-cut[wide]);
+    cut[wide]+=take;cut[thin]+=over-take;
+  });
+  return cut.map(w=>w/N);
+}
+/* What each cover loses, kept by the address of its picture with the size taken
+   out, so that one measure does for every size of it: the cover, the small one
+   in the list and the one on the card are all cut alike. It is taken on the
+   biggest picture of the cover that has come in. Under 300 pixels there is too
+   little to measure, so no cover is asked for smaller than that. */
+const trims=new Map();
+const coverId=u=>u.replace(/\/\d+x\d+(?=bb\.|-\d)/,"/");
+function trim(img){
+  const id=coverId(img.src),w=img.naturalWidth;
+  let t=trims.get(id);
+  if(w>=300&&w===img.naturalHeight&&img.crossOrigin!==null&&(!t||t.w<w)){
+    t={w:w,cut:outline(img,REACH)};
+    trims.set(id,t);
+    if(trims.size>80)trims.delete(trims.keys().next().value);
+  }
+  if(!t||!t.cut)return;
+  /* how big the picture has to be for the slot to show just what is left of it, and where its corner goes */
+  const [top,,left,right]=t.cut,s=100/(1-left-right);
+  img.style.setProperty("--s",s);img.style.setProperty("--x",left*s);img.style.setProperty("--y",top*s);
+}
+/* A cover is asked for in the way that lets its pixels be read. Should a server
+   refuse that, it is asked for again the plain way: a cover that cannot be
+   measured still beats a tile. */
+function loadCover(u,ok,fail,plain){
+  const im=new Image();
+  im.alt="";
+  if(!plain)im.crossOrigin="anonymous";
+  im.onload=()=>{trim(im);ok(im);};
+  im.onerror=()=>{if(!plain)loadCover(u,ok,fail,true);else if(fail)fail();};
+  im.src=u;
+}
 /* A picture that is ready to draw costs the first frame of a flip nothing. It is
    not waited on for long: a page in the background never reports one ready. */
 const decoded=face=>Promise.race([
@@ -958,10 +1093,8 @@ function paintCover(){
   radio.art(key,600,u=>{
     if(artFor!==key)return;
     if(!u){clearTimeout(tileTO);tile();return;}
-    const probe=new Image();
-    probe.onload=()=>{if(artFor!==key)return;clearTimeout(tileTO);changeFace(makeFace(key,letter,probe),key+"|"+u);};
-    probe.onerror=()=>{if(artFor!==key)return;clearTimeout(tileTO);tile();};
-    probe.src=u;
+    loadCover(u,im=>{if(artFor!==key)return;clearTimeout(tileTO);changeFace(makeFace(key,letter,im),key+"|"+u);},
+                ()=>{if(artFor!==key)return;clearTimeout(tileTO);tile();});
   });
 }
 /* ---------- just played ----------
@@ -987,11 +1120,14 @@ function makeRow(p){
   const b=document.createElement("b"),s=document.createElement("span");
   b.textContent=p.artist||p.title;s.textContent=p.artist?p.title:"";
   tx.append(b,s);li.append(th,tx);li.title=p.text;li.song=p.text;li.info=p;
-  radio.art(p.text,100,u=>{
+  /* asked for bigger than it is shown, because that is the smallest a cover can be measured at (see trim) */
+  radio.art(p.text,300,u=>{
     if(!u)return;
-    const im=new Image();im.alt="";
-    im.onload=()=>im.classList.add("on");
-    im.src=u;th.append(im);
+    loadCover(u,im=>{
+      th.append(im);
+      im.offsetWidth;                // drawn once unseen, so that it comes up and does not just appear
+      im.classList.add("on");
+    });
   });
   return li;
 }
@@ -1166,9 +1302,7 @@ function openAct(song,x,y,row){
   actArt.replaceChildren(...makeFace(song.text,Array.from(song.artist||song.title)[0],null).childNodes);
   radio.art(song.text,300,u=>{
     if(!u||actFor!==song)return;
-    const im=new Image();
-    im.alt="";im.onload=()=>{if(actFor===song)actArt.append(im);};
-    im.src=u;
+    loadCover(u,im=>{if(actFor===song)actArt.append(im);});
   });
   /* a row lights up, and the menu stands clear of it, so it is plain which song is meant */
   actRow=row||null;
