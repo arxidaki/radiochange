@@ -37,12 +37,17 @@ function emit(evt,arg){(subs[evt]||[]).forEach(fn=>{try{fn(arg);}catch(e){consol
 /* ---------------- settings survive reloads ---------------- */
 let store={};
 try{store=JSON.parse(localStorage.getItem("radiochange")||"{}")||{};}catch(e){}
-const eq=new Array(NB).fill(0);   // dB
-if(Array.isArray(store.eq))for(let i=0;i<NB;i++)
-  if(typeof store.eq[i]==="number"&&isFinite(store.eq[i]))eq[i]=Math.max(-12,Math.min(12,store.eq[i]));
+/* Until the listener chooses a sound, the station's own is on: MOSH. `chose` is
+   kept with the curve, so a choice of FLAT is a choice like any other. Saves
+   from before it was kept say nothing either way: there a curve counts as
+   chosen unless it is flat, which is what everybody had who never touched it. */
+let chose=typeof store.chose==="boolean"?store.chose:Array.isArray(store.eq)&&store.eq.some(v=>v);
+const eq=PRESETS.MOSH.slice();    // dB
+if(chose&&Array.isArray(store.eq))for(let i=0;i<NB;i++)
+  eq[i]=typeof store.eq[i]==="number"&&isFinite(store.eq[i])?Math.max(-12,Math.min(12,store.eq[i])):0;
 let vol=(typeof store.vol==="number"&&store.vol>0&&store.vol<=1)?store.vol:.8;   // 0..1
 /* a mute is not kept: what is saved is the level it would come back to */
-function save(){try{localStorage.setItem("radiochange",JSON.stringify({vol:vol||back,eq:eq}));}catch(e){}}
+function save(){try{localStorage.setItem("radiochange",JSON.stringify({vol:vol||back,eq:eq,chose:chose}));}catch(e){}}
 
 /* ---------------- audio graph ---------------- */
 let ctx=null,analyser=null,master=null,input=null,audioEl=null,timeBuf=null,freqBuf=null;
@@ -96,7 +101,7 @@ function presetName(){
   return hit?hit[0]:null;
 }
 function setBand(i,dB){
-  eq[i]=Math.max(-12,Math.min(12,dB));save();
+  eq[i]=Math.max(-12,Math.min(12,dB));chose=true;save();
   if(filters[i])filters[i].gain.setTargetAtTime(eq[i],ctx.currentTime,.03);
   emit("eq",eq);
 }
@@ -106,12 +111,12 @@ function setEq(g){
     eq[i]=Math.max(-12,Math.min(12,g[i]));
     if(filters[i])filters[i].gain.setTargetAtTime(eq[i],ctx.currentTime,.03);
   }
-  save();emit("eq",eq);
+  chose=true;save();emit("eq",eq);
 }
 function setPreset(name){
   const g=PRESETS[name];if(!g)return;
   for(let i=0;i<NB;i++){eq[i]=g[i];if(filters[i])filters[i].gain.setTargetAtTime(g[i],ctx.currentTime,.05);}
-  save();emit("eq",eq);
+  chose=true;save();emit("eq",eq);
 }
 
 /* ---- test synth: 140 BPM kick / snare / hat / bass through the same chain ---- */

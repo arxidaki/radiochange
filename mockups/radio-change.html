@@ -18,6 +18,10 @@
     /* the strip the volume stands in; the ten EQ bands take the rest of the width */
     --gut:calc(var(--pad) + var(--volw) + var(--gap)/2);
     --gl:var(--gut);--gr:0px;
+    /* The strip runs from the page's edge to halfway across the gap, so its
+       middle is not the middle of the volume's column. This is how far the
+       volume moves to stand there. */
+    --volx:calc(var(--gap)/4 - var(--pad)/2);
     --ease:cubic-bezier(.7,0,.15,1);
     --mono:"Martian Mono",ui-monospace,Consolas,monospace;
   }
@@ -77,7 +81,7 @@
      the field itself runs fast and fine behind whatever is selected (see the
      shader), so here the letters only need to keep their own look. */
   #block{pointer-events:auto}
-  .ln{user-select:text;-webkit-user-select:text;cursor:pointer}
+  .ln{user-select:text;-webkit-user-select:text;cursor:text}
   .ln.a::selection,.ln.a .br::selection{background:transparent;color:var(--cream);text-shadow:.03em .03em 0 var(--ink)}
   .ln.t::selection,.ln.t .br::selection{background:transparent;color:var(--ink);-webkit-text-stroke:.04em var(--cream)}
   body.nogl .ln::selection,body.nogl .ln .br::selection{background:#E81E8C}        /* no field to draw it: a plain hot highlight */
@@ -133,7 +137,7 @@
   .num{min-width:40px;text-align:center;padding:.7em .5em;font-size:11px;letter-spacing:.06em}
 
   /* volume: upright, the wheel moves it from anywhere, mute sits at its foot */
-  #vol{grid-column:1;grid-row:2/4;display:flex;flex-direction:column;align-items:center;gap:10px}
+  #vol{grid-column:1;grid-row:2/4;left:var(--volx);display:flex;flex-direction:column;align-items:center;gap:10px}
   .fader{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;
     cursor:ns-resize;touch-action:none}
   .fader .trk{max-height:58vh;margin-top:auto}
@@ -233,7 +237,7 @@
 
   /* a phone: the volume moves to the right */
   @media (max-width:760px){
-    :root{--volw:40px;--gl:0px;--gr:var(--gut)}
+    :root{--volw:40px;--gl:0px;--gr:var(--gut);--volx:calc(var(--pad)/2 - var(--gap)/4)}
     body{grid-template-columns:minmax(0,1fr) var(--volw);grid-template-rows:auto minmax(0,1fr) auto auto;row-gap:12px}
     header{padding-bottom:0}
     #block{grid-column:1}
@@ -313,7 +317,7 @@
   <div id="measure" aria-hidden="true"></div>
   <div id="err" role="alert"></div>
 
-<script src="engine.js?v=18"></script>
+<script src="engine.js?v=19"></script>
 <script>
 /* =====================================================================
    RADIO CHANGE
@@ -988,10 +992,11 @@ document.addEventListener("copy",e=>{
 });
 
 /* ================= the song elsewhere =================
-   A click or a tap on a song (the big type, the cover, a row of the list)
-   brings up a card: its picture, and beside it four ways out of the page. Copy
-   its name, or look it up on YouTube, Spotify or Apple Music. The three are
-   searches by name, because a name is all the stream gives. */
+   A click or a tap on a song (the cover, or a row of the list) brings up a
+   card: its picture, and beside it four ways out of the page. Copy its name,
+   or look it up on YouTube, Spotify or Apple Music. The three are searches by
+   name, because a name is all the stream gives. The big type brings up
+   nothing: it is there to be read, and selected. */
 const actEl=$("#act"),actArt=$("#actArt");
 let actFor=null,actRow=null,swipedAt=-1e9;
 function closeAct(){
@@ -1028,7 +1033,7 @@ function openAct(song,x,y,row){
 function songAt(el){
   const row=el.closest("#hist li");
   if(row)return row.info||null;
-  return el.closest(".ln,#art")?radio.track:null;
+  return el.closest("#art")?radio.track:null;
 }
 /* the clipboard the modern way, and where that is missing or refused, the old way */
 function copyText(text){
