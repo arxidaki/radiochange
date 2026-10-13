@@ -340,6 +340,19 @@ function sample(){
 
 /* ---------------- now playing + just played ---------------- */
 const SITE=/\s*[\(\[][^\)\]]*\b[a-z0-9-]+\.(com|net|org|pm|ru|info|me|cc|fm|to|biz|co)\b[^\)\]]*[\)\]]/gi;
+/* Two things are remembered about songs: their covers (see artwork), and what a
+   tag turned out to say where the lookup read it differently from how it is
+   written (see holdsBoth): the tag, tidied, against the song it is. One number
+   for both, to put up whenever the lookup or the matching changes: what was
+   kept under an older one is thrown out. */
+const ART="radiochange.art12",READS="radiochange.reads12";
+let reads={};
+try{
+  Object.keys(localStorage).forEach(k=>{
+    if(/^radiochange\.(art|reads)\d*$/.test(k)&&k!==ART&&k!==READS)localStorage.removeItem(k);
+  });
+  reads=JSON.parse(localStorage.getItem(READS)||"{}")||{};
+}catch(e){}
 function tidy(raw){
   /* some uploads use _ for spaces, and carry the site they came from: "(mp3.pm)" */
   const s=raw.replace(/[_\s]+/g," ").replace(SITE,"")
@@ -366,7 +379,9 @@ function tidy(raw){
   }
   /* "Killers, The": filed under K, but the name is The Killers */
   if(parts.length>1)parts[0]=parts[0].replace(/^(.+),\s*(the|a|an)$/i,"$2 $1");
-  return parts.join(" - ");
+  const t=parts.join(" - ");
+  /* a tag that has been read differently before is that song at once */
+  return Object.prototype.hasOwnProperty.call(reads,t)?reads[t]:t;
 }
 function split(text){
   const p=text.split(" - ");
@@ -403,6 +418,20 @@ function setTrack(text){
       title:track.title,artist:track.artist||"Radio Change",
       artwork:[{src:u,sizes:"512x512",type:"image/jpeg"}]});
   });
+}
+/* The lookup has found that a tag says something else than it seemed to (see
+   holdsBoth). It is that song from now on: in the list, on air if it is the one
+   playing, and each time the station sends the tag again (see tidy). */
+function reread(text,song){
+  if(song===text)return;
+  reads[text]=song;
+  const keys=Object.keys(reads);
+  if(keys.length>80)delete reads[keys[0]];
+  try{localStorage.setItem(READS,JSON.stringify(reads));}catch(e){}
+  hist=hist.map(t=>t===text?song:t).filter((t,i,a)=>a.indexOf(t)===i);
+  if(KEEP)try{localStorage.setItem("radiochange.hist",JSON.stringify(hist));}catch(e){}
+  if(track&&track.text===text)setTrack(song);    // which tells the page about the list as well
+  else emit("history",played());
 }
 /* What the station played before this page was opened. The server keeps its
    own list, newest first, the song on air at the head of it, and answers JSONP
@@ -446,15 +475,13 @@ function poll(){
    The stream only carries "artist - title", so covers are looked up: first in
    the iTunes Search API, then in Deezer's (neither needs a key; both answer
    JSONP). A cover only counts when both the artist and the song agree, or a
-   namesake's sleeve gets shown. If the song has no sleeve anywhere, a picture
+   namesake's sleeve gets shown. A title that turns out to hold the act as well
+   as the song is read that way. If the song has no sleeve anywhere, a picture
    of the artist stands in. A name that looks misspelt is tried again as the
    name it most likely is, and a double bill as the act billed first. A miss is
    remembered too, so nothing is looked up twice. */
 let artStore={};
-try{
-  ["radiochange.art","radiochange.art2","radiochange.art3","radiochange.art4","radiochange.art5","radiochange.art6","radiochange.art7","radiochange.art8","radiochange.art9"].forEach(k=>localStorage.removeItem(k));   // older caches
-  artStore=JSON.parse(localStorage.getItem("radiochange.art10")||"{}")||{};
-}catch(e){}
+try{artStore=JSON.parse(localStorage.getItem(ART)||"{}")||{};}catch(e){}
 const artWait={};
 let artQueue=Promise.resolve();
 function norm(s){
@@ -521,6 +548,23 @@ function sameSong(title,theirs){
 function agrees(artist,title,theirArtist,theirTitle){
   return either(sameAct,artist,theirArtist||"")&&either(sameSong,title,theirTitle||"");
 }
+/* Some tags put the lot in the title, "Counting Crows Accidentally In Love", and
+   something else where the artist goes ("I'm in love"). A listing fits a title
+   like that when the title's words divide in two with nothing over, its act one
+   side and its song the other: in either order, a leading "The" on the act and
+   a typo allowed. Gives the title read that way, {artist,title} in the tag's
+   own words, or null. */
+function holdsBoth(title,theirArtist,theirTitle){
+  const w=bare(title).split(" ").filter(Boolean),a=nameKey(theirArtist||""),s=flat(bare(theirTitle||""));
+  if(a.length<2||s.length<2)return null;
+  const is=(x,y)=>x===y||(x.length>=8&&slips(x,y)<=Math.floor(x.length/8));
+  for(let k=1;k<w.length;k++){
+    const head=w.slice(0,k).join(" "),tail=w.slice(k).join(" ");
+    if(is(nameKey(head),a)&&is(flat(tail),s))return {artist:head,title:tail};
+    if(is(flat(head),s)&&is(nameKey(tail),a))return {artist:tail,title:head};
+  }
+  return null;
+}
 function jsonp(url){
   return new Promise(res=>{
     const cb="rcart_"+Math.random().toString(36).slice(2);
@@ -533,18 +577,19 @@ function jsonp(url){
     document.head.append(s);
   });
 }
-/* each returns a cover url, "" for an honest miss, or null when the service did not answer */
+/* each returns a cover url, "" for an honest miss, or null when the service did not answer;
+   fits(theirArtist,theirTitle) says whether a listing is the song */
 const SOURCES=[
-  async(term,artist,title)=>{
+  async(term,fits)=>{
     const r=await jsonp("https://itunes.apple.com/search?media=music&entity=song&limit=10&term="+encodeURIComponent(term)+"&callback=");
     if(!r)return null;
-    const hit=(r.results||[]).find(x=>x.artworkUrl100&&agrees(artist,title,x.artistName,x.trackName||""));
+    const hit=(r.results||[]).find(x=>x.artworkUrl100&&fits(x.artistName,x.trackName||""));
     return hit?hit.artworkUrl100:"";
   },
-  async(term,artist,title)=>{
+  async(term,fits)=>{
     const r=await jsonp("https://api.deezer.com/search?limit=10&q="+encodeURIComponent(term)+"&output=jsonp&callback=");
     if(!r||r.error)return null;
-    const hit=(r.data||[]).find(x=>x.album&&x.album.cover_big&&agrees(artist,title,x.artist&&x.artist.name,x.title||""));
+    const hit=(r.data||[]).find(x=>x.album&&x.album.cover_big&&fits(x.artist&&x.artist.name,x.title||""));
     return hit?hit.album.cover_big:"";
   },
 ];
@@ -586,21 +631,33 @@ async function findLead(artist){
   }
   return "";
 }
-/* the song's own sleeve, from whichever service has it: a url, "" or null (no answer) */
-async function findSleeve(artist,title){
+/* the song's own sleeve, from whichever service has it: a url, "" or null (no answer).
+   With `read`, the title may turn out to hold the act as well as the song, and
+   read(names) is told when the sleeve was found by reading it so. A second go
+   under another name for the artist comes without: that has been tried. */
+async function findSleeve(artist,title,read){
   const tw=title.split(" "),aw=artist.split(" ");
   /* What to ask for, most exact first. Tags often carry extra words after the
      name ("Everybody Hurts R.E.M. cover"), so the title is also tried a word or
-     two shorter; a double-billed artist is also tried by its first name alone. */
+     two shorter; a double-billed artist is also tried by its first name alone.
+     Last of all the title with no artist, in case it holds the act as well
+     (see holdsBoth). */
   const terms=[artist+" "+title];
   for(let cut=1;cut<=2&&tw.length-cut>=1;cut++)terms.push(artist+" "+tw.slice(0,tw.length-cut).join(" "));
   if(aw.length>2)terms.push(aw.slice(0,2).join(" ")+" "+title);
+  if(read&&tw.length>1)terms.push(title);
+  const fits=(a,s)=>{
+    if(agrees(artist,title,a,s))return true;
+    const names=read?holdsBoth(title,a,s):null;
+    if(names)read(names);
+    return !!names;
+  };
   let unanswered=false;
   const down=SOURCES.map(()=>false);
   for(const term of terms){
     for(let i=0;i<SOURCES.length;i++){
       if(down[i])continue;
-      const u=await SOURCES[i](term,artist,title);
+      const u=await SOURCES[i](term,fits);
       if(u)return u;
       if(u===null){down[i]=true;unanswered=true;}
       await pause(220);                    // stay well inside both services' limits
@@ -613,13 +670,14 @@ async function findSleeve(artist,title){
    means; then a picture of that artist. Gives {u,sure}: a cover url or "", and
    whether that is the last word. A service that did not answer leaves it open:
    the sleeve may still be out there, so the artist stands in for now and the
-   song is looked up again next time. */
+   song is looked up again next time. With `names`, the sleeve was found by
+   reading the title as act and song together (see holdsBoth). */
 async function artLookup(t){
   /* "(Original Version)", "[Remastered]", "feat. X" only hurt the search */
   const title=bare(t.title).replace(/\s+(feat|ft)\.? .*$/i,"").trim()||t.title;
-  let sure=true;
-  let u=await findSleeve(t.artist,title);
-  if(u)return {u:u,sure:true};
+  let sure=true,names=null;
+  let u=await findSleeve(t.artist,title,n=>{names=n;});
+  if(u)return {u:u,sure:true,names:names};
   if(u===null)sure=false;
   let who=await findArtist(t.artist);
   if(who==="")who=await findLead(t.artist);
@@ -642,12 +700,16 @@ function art(text,size,fn){
   if(!artWait[text]){
     artWait[text]=artQueue=artQueue.then(()=>artLookup(t)).then(r=>{
       delete artWait[text];
+      /* a tag read differently goes by what it says from here on, under the same cover */
+      const song=r.names?tidy(r.names.artist+" - "+r.names.title):"";
       if(r.sure){                        // no answer is not a miss: try again next time
         artStore[text]=r.u;
+        if(song)artStore[song]=r.u;
         const keys=Object.keys(artStore);
-        if(keys.length>80)delete artStore[keys[0]];
-        try{localStorage.setItem("radiochange.art10",JSON.stringify(artStore));}catch(e){}
+        keys.slice(0,Math.max(0,keys.length-80)).forEach(k=>delete artStore[k]);
+        try{localStorage.setItem(ART,JSON.stringify(artStore));}catch(e){}
       }
+      if(song)reread(text,song);
       return r.u;
     });
   }
@@ -657,12 +719,13 @@ function art(text,size,fn){
 const FAKE=["Queens of the Stone Age - No One Knows","The Smashing Pumpkins - Bullet with Butterfly Wings",
             "U2 - One","PJ Harvey - Rid of Me","Rage Against the Machine - Killing in the Name","Yeah Yeah Yeahs - Maps"];
 /* the skip test's running order: long names and short, one with no sleeve
-   anywhere (it gets the artist's picture), one tagged wrong, one nobody has */
+   anywhere (it gets the artist's picture), one tagged wrong, one nobody has,
+   and one with the act in the title (it is renamed once it has been looked up) */
 const SKIPS=["Deep Purple - Black Night","Michael Jackson - Remember The Time","U2 - One",
              "The Smashing Pumpkins - Bullet with Butterfly Wings","L.A. Guns - Cold Gin",
              "Queens of the Stone Age - No One Knows","B.Tyler - Total Eclipse ot the Heart",
              "Soul Asylum - 99%","Rage Against the Machine - Killing in the Name",
-             "The House Band - A Song With No Cover"];
+             "The House Band - A Song With No Cover","I_m_in_love - Counting_Crows_Accidentally_In_Love_"];
 let fakeI=0;
 function begin(){
   if(DEMO||SKIP){
