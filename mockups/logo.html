@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Radio Change: Logo sketches</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet" />
+<style>
+  :root{--ink:#1C0836;--cream:#FFF3DC;--amber:#FFC93C;--pad:clamp(16px,2.6vw,40px)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:#0E041C;color:var(--cream);overflow:hidden;height:100dvh;position:relative;
+    font-family:Archivo,"Arial Narrow",Impact,sans-serif;font-stretch:100%;-webkit-font-smoothing:antialiased}
+  canvas{display:block}
+  #hero{position:absolute;inset:0;width:100%;height:100%}
+  .lab{font-weight:800;font-stretch:112%;font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+  header{position:absolute;left:var(--pad);top:var(--pad);opacity:.7;pointer-events:none}
+  .say{position:absolute;left:var(--pad);bottom:var(--pad);max-width:min(46ch,44vw);pointer-events:none}
+  h1{font-weight:900;font-stretch:75%;font-size:clamp(24px,min(5.4vw,11vh),84px);line-height:.9;text-transform:uppercase}
+  .say p{margin-top:.7em;font-weight:500;font-size:clamp(11px,min(1.15vw,2.6vh),16px);line-height:1.45;opacity:.86}
+  nav{position:absolute;right:var(--pad);bottom:var(--pad);display:flex;gap:clamp(5px,.8vw,10px)}
+  nav button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;display:grid;gap:6px;justify-items:center;opacity:.6}
+  nav .lab{font-size:clamp(7px,.8vw,10px);letter-spacing:.12em}
+  nav button:hover{opacity:.9}
+  nav button[aria-pressed=true]{opacity:1}
+  nav canvas{width:clamp(40px,min(7.2vw,13vh),92px);height:clamp(40px,min(7.2vw,13vh),92px);border-radius:16%;outline:2px solid transparent;outline-offset:3px}
+  nav button[aria-pressed=true] canvas{outline-color:var(--amber)}
+  #err{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:var(--pad)}
+  /* a phone held upright: the words sit above the row of sketches */
+  @media (max-width:760px) and (min-height:560px){
+    .say{bottom:calc(var(--pad) + 96px);max-width:none;right:var(--pad)}
+    h1{font-size:44px}.say p{font-size:14px}
+    nav{left:var(--pad);right:var(--pad);justify-content:space-between}
+    nav canvas{width:58px;height:58px}
+  }
+</style>
+</head>
+<body>
+  <canvas id="hero"></canvas>
+  <header><span class="lab">Radio Change · logo sketches · move the pointer</span></header>
+  <div class="say"><h1 id="name"></h1><p id="idea"></p></div>
+  <nav id="nav" aria-label="Sketches"></nav>
+  <div id="err" class="lab">This page needs WebGL 2.</div>
+
+<script>
+/* =====================================================================
+   RADIO CHANGE: five logo symbols, sketched as lit objects.
+   One ray-marched scene per symbol: a dark glossy floor, a warm key light,
+   and metal that reflects the player's liquid light show without showing it.
+   Nothing here is final; it is for pointing at.
+   ===================================================================== */
+const SKETCHES=[
+  ["Seed","Broadcast first meant scattering seed. A dandelion head is called a clock, and blowing one is letting go."],
+  ["Door","A door left ajar, with light coming through. The moment before something changes."],
+  ["Hourglass","Time moving on, a grain at a time. Stood on end like this, it is also the shape of a bow-tie aerial."],
+  ["Horizon","A record on the horizon with the sun behind it. Rising or setting: you cannot tell, and that is the point."],
+  ["Delta","The sign for change, bent out of one bar of metal. Also a guitar pick, and a play button turned upward."],
+];
+
+const VERT=`#version 300 es
+in vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+const FRAG=`#version 300 es
+precision highp float;
+uniform vec2 uRes,uM;
+uniform float uT;
+uniform int uScene;
+out vec4 o;
+
+const vec3 INK=vec3(.110,.031,.212),CREAM=vec3(1.,.953,.863),AMBER=vec3(1.,.788,.235);
+const vec3 RED=vec3(1.,.231,.18),ORG=vec3(1.,.541,.118),MAG=vec3(.91,.118,.549),VIO=vec3(.416,.122,.878);
+const vec3 KEY=vec3(-.5209,.7103,.4735);
+const float FLOOR=-1.;
+
+float gE;                              // distance to the nearest thing that glows; map() sets it
+
+mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
+float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float vnoise(vec2 p){
+  vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+  return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);
+}
+float fbm(vec2 p){return .6*vnoise(p)+.3*vnoise(p*2.03+7.1)+.1*vnoise(p*4.1+3.3);}
+
+float sdCap(vec3 p,vec3 a,vec3 b,float r){
+  vec3 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);
+  return length(pa-ba*h)-r;
+}
+float sdBox(vec3 p,vec3 b){vec3 q=abs(p)-b;return length(max(q,0.))+min(max(q.x,max(q.y,q.z)),0.);}
+/* a cone standing on y, half-height h, radius r1 at the bottom and r2 at the top */
+float sdCone(vec3 p,float h,float r1,float r2){
+  vec2 q=vec2(length(p.xz),p.y);
+  vec2 k1=vec2(r2,h),k2=vec2(r2-r1,2.*h);
+  vec2 ca=vec2(q.x-min(q.x,(q.y<0.)?r1:r2),abs(q.y)-h);
+  vec2 cb=q-k1+k2*clamp(dot(k1-q,k2)/dot(k2,k2),0.,1.);
+  float s=(cb.x<0.&&ca.y<0.)?-1.:1.;
+  return s*sqrt(min(dot(ca,ca),dot(cb,cb)));
+}
+float sdTri(vec2 p,float r){
+  const float k=1.7320508;
+  p.x=abs(p.x)-r;p.y=p.y+r/k;
+  if(p.x+k*p.y>0.)p=vec2(p.x-k*p.y,-k*p.x-p.y)/2.;
+  p.x-=clamp(p.x,-2.*r,0.);
+  return -length(p)*sign(p.y);
+}
+
+float leafA(){return .7+.36*sin(uT*.42);}   // how far the door stands open
+#define U(d,m) if((d)<r.x)r=vec2(d,m);
+/* materials: 1 metal  2 cream enamel  3 glowing amber  4 record  5 glowing cream  6 red lacquer */
+vec2 map(vec3 p){
+  vec2 r=vec2(1e5,0.);
+  gE=1e5;
+  p.y-=.03*sin(uT*.8);                 // everything hangs in the air, breathing a little
+  if(uScene==0){
+    /* seed: a stalk, a cone of filaments with a bead of light on each, the seed below */
+    vec3 q=p-vec3(0.,.12,0.);
+    q.xy*=rot(-.3+.05*sin(uT*.6));q.yz*=rot(.1*sin(uT*.45));
+    float d=sdCap(q,vec3(0.,-.6,0.),vec3(0.,.2,0.),.02);U(d,2.)
+    vec3 s=q-vec3(0.,-.74,0.);
+    float ds=(length(s/vec3(.075,.18,.075))-1.)*.075;U(ds,3.)
+    gE=min(gE,ds);
+    vec3 c=q-vec3(0.,.2,0.);
+    float ang=atan(c.z,c.x),rad=length(c.xz);
+    float sec=6.2832/11.,a1=mod(ang+sec*.5,sec)-sec*.5;
+    vec3 f=vec3(rad*cos(a1),c.y,rad*sin(a1));
+    float th=.98+.07*sin(uT*1.1);
+    vec3 tip=vec3(sin(th),cos(th),0.)*.6;
+    d=sdCap(f,vec3(0.),tip,.012);U(d,2.)
+    d=length(f-tip)-.036;U(d,5.)
+    gE=min(gE,d);
+    sec=6.2832/6.;a1=mod(ang+.5+sec*.5,sec)-sec*.5;
+    f=vec3(rad*cos(a1),c.y,rad*sin(a1));
+    th=.44+.05*sin(uT*1.3+1.);
+    tip=vec3(sin(th),cos(th),0.)*.66;
+    d=sdCap(f,vec3(0.),tip,.012);U(d,2.)
+    d=length(f-tip)-.036;U(d,5.)
+    gE=min(gE,d);
+  }else if(uScene==1){
+    /* door: a frame standing alone, a sheet of light in it, the leaf swinging */
+    float post=min(sdBox(p-vec3(-.52,-.08,0.),vec3(.06,.92,.07)),sdBox(p-vec3(.52,-.08,0.),vec3(.06,.92,.07)));
+    float lint=sdBox(p-vec3(0.,.9,0.),vec3(.58,.06,.07));
+    U(min(post,lint)-.012,2.)
+    float lp=sdBox(p-vec3(0.,-.08,-.03),vec3(.46,.92,.004));U(lp,3.)
+    gE=min(gE,lp);
+    vec3 l=p-vec3(-.46,-.08,.06);
+    l.xz*=rot(-leafA());
+    U(sdBox(l-vec3(.45,0.,0.),vec3(.45,.9,.024))-.008,6.)
+  }else if(uScene==2){
+    /* hourglass: metal caps, sand in the top, a thread of it falling, a heap below */
+    float caps=min(sdBox(p-vec3(0.,.84,0.),vec3(.56,.035,.56)),sdBox(p-vec3(0.,-.84,0.),vec3(.56,.035,.56)));
+    caps=max(caps,length(p.xz)-.58);
+    U(caps-.012,1.)
+    float rr=length(p.xz);
+    float top=max(sdCone(p-vec3(0.,.4,0.),.37,.035,.43),p.y-(.5-.13*exp(-rr*rr*26.)));
+    float bot=max(sdCone(p-vec3(0.,-.4,0.),.37,.43,.035),p.y+.4+.95*rr)*.7;
+    float thr=sdCap(p,vec3(0.,.04,0.),vec3(0.,-.42,0.),.011);
+    float sand=min(top,min(bot,thr));
+    U(sand,3.)
+    gE=min(gE,sand);
+  }else if(uScene==3){
+    /* horizon: a record standing in the floor, the sun directly behind it */
+    vec3 q=p-vec3(0.,FLOOR,0.);
+    float rr=length(q.xy);
+    float d=max(max(abs(q.z)-.022,rr-1.08),.065-rr);
+    U(d,4.)
+    gE=length(q-vec3(0.,.1,-.5))-.86;
+  }else{
+    /* delta: one round bar bent into a triangle, turning slowly */
+    vec3 q=p-vec3(0.,-.1,0.);
+    q.xz*=rot(.55*sin(uT*.33));
+    float d=length(vec2(abs(sdTri(q.xy,.6)-.1),q.z))-.155;
+    U(d,1.)
+  }
+  return r;
+}
+/* the hourglass's glass, kept apart from everything solid so the sand shows through it */
+float mapGlass(vec3 p){
+  p.y-=.03*sin(uT*.8);
+  float a=sdCone(p-vec3(0.,.4,0.),.4,.05,.5),b=sdCone(p-vec3(0.,-.4,0.),.4,.5,.05);
+  float k=.06,h=clamp(.5+.5*(b-a)/k,0.,1.);
+  return mix(b,a,h)-k*h*(1.-h)-.012;
+}
+
+vec3 pal(float i){
+  i=mod(i,6.);
+  if(i<1.)return RED;if(i<2.)return ORG;if(i<3.)return AMBER;if(i<4.)return MAG;if(i<5.)return VIO;
+  return INK*1.5;
+}
+/* what the metal sees: the light show, off-screen, and the key light */
+vec3 env(vec3 rd){
+  float t=uT*.05;
+  vec2 q=vec2(rd.x+rd.z*.5,rd.y*1.4-rd.z*.3)*1.5;
+  vec2 a=vec2(fbm(q*1.2+vec2(0.,t*2.)),fbm(q*1.2+vec2(5.2,1.3)-t*1.7));
+  float f=fbm(q+1.5*a+vec2(t,-t*.7));
+  float v=f*6.+t*3.;
+  float i=floor(v),e=fract(v);
+  vec3 band=mix(pal(i),pal(i+1.),smoothstep(.86,1.,e));
+  vec3 c=mix(INK*.3,band,.92*smoothstep(-.2,.3,rd.y));
+  float k=max(dot(rd,KEY),0.);
+  c+=vec3(1.,.92,.8)*pow(k,70.)*5.+CREAM*.45*pow(k,6.);
+  return c;
+}
+vec3 bg(vec3 rd){
+  vec3 c=mix(INK*.14,INK*.5,smoothstep(-.05,.8,rd.y));
+  if(uScene==3){                       // a low sun colours the sky
+    float h=exp(-abs(rd.y)*5.);
+    c+=(mix(MAG,ORG,h)*.42+AMBER*.3*h*h*h)*h;
+  }
+  return c;
+}
+
+vec3 normalAt(vec3 p){
+  vec2 e=vec2(.0015,-.0015);
+  return normalize(e.xyy*map(p+e.xyy).x+e.yyx*map(p+e.yyx).x+e.yxy*map(p+e.yxy).x+e.xxx*map(p+e.xxx).x);
+}
+vec3 normalGlass(vec3 p){
+  vec2 e=vec2(.0015,-.0015);
+  return normalize(e.xyy*mapGlass(p+e.xyy)+e.yyx*mapGlass(p+e.yyx)+e.yxy*mapGlass(p+e.yxy)+e.xxx*mapGlass(p+e.xxx));
+}
+float march(vec3 ro,vec3 rd,float tmax,out float glow){
+  float t=0.;glow=0.;
+  for(int i=0;i<96;i++){
+    float h=map(ro+rd*t).x;
+    glow+=exp(-max(gE,0.)*7.)*min(h,.2);
+    if(h<.0006*t+.0003||t>tmax)break;
+    t+=h*.92;
+  }
+  return t;
+}
+float shadow(vec3 ro,vec3 rd,float k,float tmax){
+  float res=1.,t=.03;
+  for(int i=0;i<26;i++){
+    float h=map(ro+rd*t).x;
+    res=min(res,k*h/t);
+    t+=clamp(h,.02,.22);
+    if(res<.004||t>tmax)break;
+  }
+  return clamp(res,0.,1.);
+}
+float occl(vec3 p,vec3 n){
+  float a=0.,s=1.;
+  for(int i=1;i<=4;i++){float d=.07*float(i);a+=(d-map(p+n*d).x)*s;s*=.6;}
+  return clamp(1.-1.6*a,0.,1.);
+}
+vec3 glowCol(){
+  if(uScene==0)return mix(CREAM,AMBER,.5)*.5;
+  if(uScene==1)return mix(AMBER,ORG,.25)*.5;
+  if(uScene==2)return mix(AMBER,ORG,.35)*.4;
+  if(uScene==3)return mix(AMBER,RED,.35)*1.15;
+  return vec3(0.);
+}
+/* Light from the open door, arriving at p with surface normal n. The leaf hangs from the
+   doorway's left edge, so from any point on the floor it hides the doorway up to the
+   sight line that grazes its free edge: the shadow is worked out, not marched. */
+vec3 doorLight(vec3 p,vec3 n,bool shad){
+  float vis=1.;
+  if(shad&&p.z>0.){
+    float A=leafA();
+    vec2 H=vec2(-.46,.06),E=H+.9*vec2(cos(A),sin(A));
+    float xb=p.z>E.y+.002?p.x+(E.x-p.x)*p.z/(p.z-E.y)
+      :((E.x-H.x)*(p.z-H.y)-(E.y-H.y)*(p.x-H.x)<0.?-1e3:1e3);
+    vis=smoothstep(0.,1.,clamp((.46-xb)/.92,0.,1.));
+  }
+  float sum=0.;
+  for(int i=0;i<3;i++){
+    vec3 d=vec3(-.3+.3*float(i),-.35,-.03)-p;
+    float L=length(d);d/=L;
+    sum+=max(dot(n,d),0.)*abs(d.z)/(.35+L*L);
+  }
+  return mix(AMBER,CREAM,.35)*sum*1.5*vis;
+}
+vec3 shade(vec3 p,vec3 rd,float m){
+  vec3 n=normalAt(p),r=reflect(rd,n);
+  float fres=pow(1.-max(dot(-rd,n),0.),5.),ao=occl(p,n);
+  float sh=shadow(p+n*.004,KEY,10.,6.),dif=max(dot(n,KEY),0.)*sh;
+  float spec=pow(max(dot(r,KEY),0.),90.)*sh;
+  vec3 extra=uScene==1?doorLight(p,n,false):vec3(0.);
+  if(m<1.5){                           // polished metal
+    vec3 e=env(r);
+    e=mix(e,INK*.22,.85*smoothstep(.05,-.35,r.y));
+    return e*mix(vec3(.93,.9,.86),vec3(1.),fres)*(.5+.5*ao);
+  }
+  if(m<2.5){                           // cream enamel
+    vec3 c=CREAM*(.2*(.5+.5*n.y)*vec3(.8,.74,1.)+dif*vec3(1.,.94,.82)+.22*max(-n.y,0.)*MAG+extra);
+    return c*ao+env(r)*(.03+.5*fres)*ao+spec*.9;
+  }
+  if(m<3.5){                           // amber, lit from inside
+    if(uScene==2){                     // sand: a body of grains, a few of them catching the light
+      float g=vnoise(p.xy*120.+p.z*90.)*vnoise(p.zy*140.+uT*1.5);
+      return mix(ORG,AMBER,.55)*(.42+.75*dif+.25*max(n.y,0.))*ao+AMBER*(.25+2.2*g*g);
+    }
+    if(uScene==1){                     // the doorway: hottest in the middle
+      float e=1.-smoothstep(0.,.46,abs(p.x)),v=smoothstep(.9,-.9,p.y);
+      return mix(mix(ORG,AMBER,.65),CREAM,.85*e)*(1.5+1.3*e)*(.8+.3*v);
+    }
+    return mix(AMBER,ORG,.25)*2.4+AMBER*dif*.3;
+  }
+  if(m<4.5){                           // record: a label, and grooves that catch the light
+    vec3 q=p-vec3(0.,FLOOR,0.);float rr=length(q.xy);
+    if(rr<.36)return mix(AMBER,ORG,.3)*(.5+.9*dif+.5*max(n.z,0.))+spec;
+    vec3 rad=vec3(q.xy/max(rr,.001),0.);
+    vec3 n2=normalize(n+rad*.2*sin(rr*64.));     // a few broad grooves; fine ones shimmer into rings
+    vec3 r2=reflect(rd,n2);
+    float f2=pow(1.-max(dot(-rd,n2),0.),4.);
+    return vec3(.012)+env(r2)*(.14+.86*f2)*.9+pow(max(dot(r2,KEY),0.),40.)*sh*.8;
+  }
+  if(m<5.5)return CREAM*2.2;           // beads of light
+  vec3 c=RED*(.1+.85*dif)+RED*extra*1.2;   // red lacquer
+  return c*ao+env(r)*(.05+.7*fres)*ao+spec;
+}
+
+void main(){
+  vec2 uv=(gl_FragCoord.xy-.5*uRes)/min(uRes.x,uRes.y);
+  float yaw=uM.x*.62+.2*sin(uT*.23),pitch=.12-uM.y*.2;
+  vec3 ta=vec3(0.,uScene==3?-.52:-.12,0.);
+  float dist=uScene==3?5.:5.5;
+  vec3 ro=ta+dist*vec3(sin(yaw)*cos(pitch),sin(pitch),cos(yaw)*cos(pitch));
+  ro.y=max(ro.y,FLOOR+.12);
+  vec3 f=normalize(ta-ro),s=normalize(cross(f,vec3(0.,1.,0.))),u=cross(s,f);
+  vec3 rd=normalize(f+.64*(uv.x*s+uv.y*u));
+
+  float glow,t=march(ro,rd,14.,glow);
+  float tF=rd.y<0.?(FLOOR-ro.y)/rd.y:1e5;
+  float tHit=min(t,tF);
+  vec3 col;
+  if(t<tF&&t<14.){
+    col=shade(ro+rd*t,rd,map(ro+rd*t).y);
+  }else if(tF<40.){
+    /* the floor: dark, glossy, holding a reflection and a shadow */
+    vec3 p=ro+rd*tF,n=vec3(0.,1.,0.);
+    if(uScene==3){
+      vec2 w=p.xz*vec2(1.6,4.)+vec2(uT*.12,uT*.3);
+      n=normalize(vec3((vnoise(w)-.5)*.16,1.,(vnoise(w+17.)-.5)*.3));
+    }
+    vec3 r=reflect(rd,n);
+    float g2,tr=march(p+vec3(0.,.003,0.),r,9.,g2);
+    vec3 refl=tr<9.?shade(p+r*tr,r,map(p+r*tr).y):bg(r);
+    refl+=g2*glowCol();
+    float fres=.1+.9*pow(1.-max(dot(-rd,n),0.),3.5);
+    float sh=shadow(p+vec3(0.,.004,0.),KEY,7.,6.);
+    col=INK*.34*(.3+.7*sh)*(.4+.6*KEY.y)+refl*fres*.8;
+    if(uScene==1)col+=doorLight(p,n,true)*1.3;
+    if(uScene==0||uScene==2)col+=glowCol()*.5*exp(-max(map(p).x,0.)*3.2);
+    col=mix(col,bg(rd),smoothstep(5.,13.,tF));
+  }else col=bg(rd);
+  col+=glow*glowCol();
+
+  if(uScene==2){
+    /* glass over whatever is behind it: mostly clear, mirror at the edges */
+    float tg=0.;bool hit=false;
+    for(int i=0;i<64;i++){
+      float h=mapGlass(ro+rd*tg);
+      if(h<.0008){hit=true;break;}
+      tg+=h;
+      if(tg>tHit||tg>14.)break;
+    }
+    if(hit&&tg<tHit){
+      vec3 p=ro+rd*tg,n=normalGlass(p),r=reflect(rd,n);
+      float F=.03+.97*pow(1.-max(dot(-rd,n),0.),4.);
+      col=col*mix(vec3(.9,.92,1.),vec3(1.),.4)*(1.-.75*F)+env(r)*F*.9+pow(max(dot(r,KEY),0.),160.)*1.4;
+    }
+  }
+
+  col*=1.-.32*dot(uv,uv);
+  col=(col*(2.51*col+.03))/(col*(2.43*col+.59)+.14);
+  o=vec4(pow(clamp(col,0.,1.),vec3(.4545)),1.);
+}`;
+
+/* one canvas, one scene */
+function view(cv,scene){
+  const gl=cv.getContext("webgl2",{antialias:false,alpha:false,powerPreference:"high-performance"});
+  if(!gl)return null;
+  const sh=(type,src)=>{
+    const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  };
+  const pr=gl.createProgram();
+  gl.attachShader(pr,sh(gl.VERTEX_SHADER,VERT));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FRAG));
+  gl.linkProgram(pr);
+  if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(pr));
+  gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(pr,"p");
+  gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const U={};["uRes","uM","uT","uScene"].forEach(n=>{U[n]=gl.getUniformLocation(pr,n);});
+  return {
+    scene:scene,
+    draw(t,mx,my){
+      gl.viewport(0,0,cv.width,cv.height);
+      gl.uniform2f(U.uRes,cv.width,cv.height);gl.uniform2f(U.uM,mx,my);
+      gl.uniform1f(U.uT,t);gl.uniform1i(U.uScene,this.scene);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    },
+  };
+}
+
+const $=s=>document.querySelector(s);
+const heroCv=$("#hero");
+let hero=null,thumbs=[],cur=0;
+try{hero=view(heroCv,0);}catch(e){console.error(e);window.shaderError=String(e.message||e);}
+if(!hero){$("#err").style.display="grid";if(window.shaderError)$("#err").textContent="The sketches failed to draw: "+window.shaderError;}
+
+function pick(i){
+  cur=(i+SKETCHES.length)%SKETCHES.length;
+  if(hero)hero.scene=cur;
+  $("#name").textContent=SKETCHES[cur][0];$("#idea").textContent=SKETCHES[cur][1];
+  document.querySelectorAll("#nav button").forEach((b,k)=>b.setAttribute("aria-pressed",k===cur));
+  try{history.replaceState(null,"","#"+SKETCHES[cur][0].toLowerCase());}catch(e){}
+}
+SKETCHES.forEach((s,i)=>{
+  const b=document.createElement("button"),c=document.createElement("canvas"),l=document.createElement("span");
+  c.width=c.height=184;l.className="lab";l.textContent=s[0];
+  b.append(c,l);b.onclick=()=>pick(i);
+  $("#nav").append(b);
+  let v=null;try{v=hero?view(c,i):null;}catch(e){}
+  thumbs.push(v);
+});
+addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight")pick(cur+1);else if(e.key==="ArrowLeft")pick(cur-1);
+});
+const start=SKETCHES.findIndex(s=>"#"+s[0].toLowerCase()===location.hash);
+pick(start<0?0:start);
+
+/* the hero is drawn at whatever size keeps it smooth: start modest, grow or shrink with the frame time */
+let scale=Math.min(devicePixelRatio||1,2),slow=0,fast=0;
+function sizeHero(){
+  const w=heroCv.clientWidth,h=heroCv.clientHeight;
+  let s=scale;
+  if(w*h*s*s>2.2e6)s=Math.sqrt(2.2e6/(w*h));
+  heroCv.width=Math.max(2,Math.round(w*s));heroCv.height=Math.max(2,Math.round(h*s));
+}
+new ResizeObserver(sizeHero).observe(heroCv);sizeHero();
+
+let mx=0,my=0,tx=0,ty=0;
+addEventListener("pointermove",e=>{tx=e.clientX/innerWidth*2-1;ty=e.clientY/innerHeight*2-1;});
+document.addEventListener("pointerleave",()=>{tx=ty=0;});
+
+const t0=performance.now()-(parseFloat(new URLSearchParams(location.search).get("t"))||0)*1000;
+let last=performance.now(),n=0;
+function frame(now){
+  const dt=now-last;last=now;
+  mx+=(tx-mx)*.06;my+=(ty-my)*.06;
+  const t=(now-t0)/1000;
+  if(hero){
+    hero.draw(t,mx,my);
+    if(dt>23){fast=0;if(++slow>20&&scale>.6){scale*=.88;slow=0;sizeHero();}}
+    else if(dt<14){slow=0;if(++fast>300&&scale<Math.min(devicePixelRatio||1,2)){scale=Math.min(scale*1.08,2);fast=0;sizeHero();}}
+  }
+  /* the small ones take turns, one a frame */
+  const v=thumbs[n++%thumbs.length];
+  if(v)v.draw(t,0,0);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
