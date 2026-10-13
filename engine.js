@@ -599,20 +599,26 @@ async function findSleeve(artist,title){
 }
 /* In order: the song's sleeve under the name as tagged; then, if the name looks
    misspelt or is a double bill, the song's sleeve under the name it most likely
-   means; then a picture of that artist. */
+   means; then a picture of that artist. Gives {u,sure}: a cover url or "", and
+   whether that is the last word. A service that did not answer leaves it open:
+   the sleeve may still be out there, so the artist stands in for now and the
+   song is looked up again next time. */
 async function artLookup(t){
   /* "(Original Version)", "[Remastered]", "feat. X" only hurt the search */
   const title=bare(t.title).replace(/\s+(feat|ft)\.? .*$/i,"").trim()||t.title;
+  let sure=true;
   let u=await findSleeve(t.artist,title);
-  if(u||u===null)return u;
+  if(u)return {u:u,sure:true};
+  if(u===null)sure=false;
   let who=await findArtist(t.artist);
   if(who==="")who=await findLead(t.artist);
-  if(!who)return who;                      // nobody fits, or no answer
+  if(!who)return {u:"",sure:sure&&who!==null};   // nobody fits, or no answer
   if(who.guessed){
     u=await findSleeve(who.name,title);
-    if(u||u===null)return u;
+    if(u)return {u:u,sure:true};
+    if(u===null)sure=false;
   }
-  return who.picture;
+  return {u:who.picture,sure:sure};
 }
 /* art(text,size,fn): fn(url) with a square cover of that pixel size, or fn(null) */
 function art(text,size,fn){
@@ -623,15 +629,15 @@ function art(text,size,fn){
   const t=split(text);
   if(!t.artist){give(null);return;}
   if(!artWait[text]){
-    artWait[text]=artQueue=artQueue.then(()=>artLookup(t)).then(u=>{
+    artWait[text]=artQueue=artQueue.then(()=>artLookup(t)).then(r=>{
       delete artWait[text];
-      if(u!==null){                      // no answer is not a miss: try again next time
-        artStore[text]=u;
+      if(r.sure){                        // no answer is not a miss: try again next time
+        artStore[text]=r.u;
         const keys=Object.keys(artStore);
         if(keys.length>80)delete artStore[keys[0]];
         try{localStorage.setItem("radiochange.art9",JSON.stringify(artStore));}catch(e){}
       }
-      return u;
+      return r.u;
     });
   }
   artWait[text].then(give);
