@@ -61,29 +61,66 @@
   .wm{--h:clamp(41px,4.05vw,55px);display:flex;align-items:center;flex:none;height:var(--h);width:calc(var(--h)*685/143);
     min-width:0;max-width:100%;margin:calc(var(--h)*-.12) 0;
     filter:drop-shadow(calc(var(--h)*.055) calc(var(--h)*.055) 0 var(--ink))}
-  .foil{position:relative;width:100%;aspect-ratio:685/143;overflow:hidden}
+  .foil{position:relative;width:100%;aspect-ratio:685/143;overflow:hidden;container-type:inline-size}
   .foil img{position:relative;z-index:1;display:block;width:100%;height:100%}
-  /* The holographic foil edition. The picture is the sticker on white, and here
-     its white becomes foil: behind the picture a pale spectrum, leaning, drifts
-     across without end, and now and then a band of light crosses it. The picture
-     lies over them so that its white takes their colour and its black stays
-     black, and all of it is cut to the sticker's shape. A browser that cannot
-     cut a shape shows the white sticker. */
+  .foil i{display:none}
+  /* The holographic foil edition, after a photograph of real stickers: brushed
+     foil with tiny polygons pressed into it. The picture is the sticker on
+     white, and here its white becomes foil: the layers of the foil lie behind
+     the picture, the picture lies over them so that its white takes their
+     colour and its black stays black, and all of it is cut to the sticker's
+     shape. A browser that cannot cut a shape shows the white sticker.
+
+     The foil's colour is a spectrum that ends on the colour it began with, laid
+     end to end on a sheet much wider than the sticker; the sheet leans, and
+     drifts across without end. The spectrum is half as wide again as the
+     sticker, and a fifth of it is no colour at all but warm silver, as a good
+     part of real foil is.
+     Tiny polygons are pressed into the foil. They are dealt into three lots,
+     and each lot shows a sheet of its own: the same spectrum, a little out of
+     step with the others and leaning another way. So a polygon stands a little
+     apart from its neighbours, and the colours break into facets as they pass.
+     Over the colours lies the grain of the paper, fine short streaks, lighter
+     and darker, that do not move at all. And now and then a soft band of light
+     crosses it.
+     The polygons and the grain are pictures drawn by the script (see the foil),
+     which says they are ready by putting .pressed on the foil. Until then the
+     second and third sheets, which would cover the first, are not shown.
+
+     Foil answers to the angle it is seen at, and this answers to the pointer:
+     with the pointer on the sticker or near it, the sheets run across as it
+     moves, each a little in its own way, and the band of light stands where it
+     is. The sticker itself stays put: only its shine moves. Everything is in
+     hundredths of the sticker's width (cqw): --t1, --t2 and --t3 are how far
+     the pointer has run each sheet, --gx where the light is and --gn how bright. */
   @supports ((-webkit-mask-image:none) or (mask-image:none)){
     .foil{-webkit-mask:url(radio-change-logo.png?v=2) center/100% 100% no-repeat;mask:url(radio-change-logo.png?v=2) center/100% 100% no-repeat}
     .foil img{mix-blend-mode:multiply}
-    .foil::before,.foil::after{content:"";position:absolute;top:0;bottom:0;will-change:transform}
-    /* the spectrum, one sticker wide and ending on the colour it began with, laid end to end */
-    .foil::before{left:-120%;right:-120%;transform:skewX(-18deg);
-      background:linear-gradient(90deg,#a3aef0,#95bdf2 10%,#82d2f5 20%,#7de8f9 29%,#95f9f0 38%,#b2fcd3 47%,#d4fac4 55%,#fbeeb2 63%,#fad0a1 72%,#f7b3a8 81%,#f3a6c4 90%,#d2a8ee 96%,#a3aef0) 0 0/calc(100%/3.4) 100% repeat-x;
-      animation:foil 16s linear infinite}
-    .foil::after{left:-60%;right:-60%;
-      background:linear-gradient(105deg,transparent 43%,rgba(255,255,255,.45) 49%,rgba(255,255,255,.15) 53%,transparent 59%);
+    .foil i{display:block;position:absolute;inset:0;overflow:hidden}
+    .foil i b{position:absolute;top:0;bottom:0;will-change:transform}
+    /* a sheet: wide enough to cover the sticker wherever its drift and the pointer have taken it */
+    .foil .sheet b{left:-300%;right:-170%;
+      background:linear-gradient(90deg,#d9c3bb,#ffb08a 9%,#ff8a2a 16%,#ffe93a 24%,#7dff5a 33%,#3df0c8 42%,#3fd4ff 49%,#5a6bff 57%,#a04dff 65%,#ff4df0 73%,#f0a6d8 81%,#d9c3bb 90%,#d9c3bb) 0 0/150cqw 100% repeat-x}
+    .foil .s1 b{transform:translateX(0) skewX(-18deg);translate:calc(var(--t1,0)*1cqw);animation:sheet1 25s linear infinite}
+    .foil .s2 b{transform:translateX(12cqw) skewX(-5deg);translate:calc(var(--t2,0)*1cqw);animation:sheet2 25s linear infinite;
+      filter:brightness(1.07)}
+    .foil .s3 b{transform:translateX(-14cqw) skewX(-31deg);translate:calc(var(--t3,0)*1cqw);animation:sheet3 25s linear infinite;
+      filter:brightness(.95) saturate(1.12)}
+    .foil .s2,.foil .s3{visibility:hidden}
+    .foil.pressed .s2{visibility:visible;-webkit-mask:var(--lot2) center/100% 100% no-repeat;mask:var(--lot2) center/100% 100% no-repeat}
+    .foil.pressed .s3{visibility:visible;-webkit-mask:var(--lot3) center/100% 100% no-repeat;mask:var(--lot3) center/100% 100% no-repeat}
+    .foil .grain{background:var(--grain) center/100% 100% no-repeat;mix-blend-mode:soft-light}
+    .foil .light b{left:-60%;right:-60%;
+      background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.34) 50%,transparent 60%);
       animation:glint 9s ease-in-out infinite}
+    .foil.held .light b{animation:none;transform:translateX(calc(var(--gx,0)*1cqw));opacity:var(--gn,0)}
   }
-  @keyframes foil{from{transform:translateX(0) skewX(-18deg)}to{transform:translateX(calc(100%/3.4)) skewX(-18deg)}}
+  /* each sheet goes one spectrum along and is back where it began */
+  @keyframes sheet1{from{transform:translateX(0) skewX(-18deg)}to{transform:translateX(150cqw) skewX(-18deg)}}
+  @keyframes sheet2{from{transform:translateX(12cqw) skewX(-5deg)}to{transform:translateX(162cqw) skewX(-5deg)}}
+  @keyframes sheet3{from{transform:translateX(-14cqw) skewX(-31deg)}to{transform:translateX(136cqw) skewX(-31deg)}}
   @keyframes glint{0%{transform:translateX(-75%)}55%,100%{transform:translateX(75%)}}
-  @media (prefers-reduced-motion:reduce){.foil::before,.foil::after{animation:none}}
+  @media (prefers-reduced-motion:reduce){.foil i b{animation:none}}
   .st{display:flex;align-items:center;gap:.7em;padding:.75em 1.1em}
   .st i{width:.9em;height:.9em;border-radius:50%;background:var(--cream);opacity:.4}
   [data-air=on] .st i{background:var(--live);opacity:1}
@@ -340,7 +377,7 @@
   <div id="cols" aria-label="Equaliser"></div>
 
   <header>
-    <span class="wm" role="img" aria-label="Radio Change"><span class="foil"><img src="radio-change-logo.png?v=2" alt="" width="685" height="143" draggable="false" /></span></span>
+    <span class="wm" role="img" aria-label="Radio Change"><span class="foil"><i class="sheet s1"><b></b></i><i class="sheet s2"><b></b></i><i class="sheet s3"><b></b></i><i class="grain"></i><i class="light"><b></b></i><img src="radio-change-logo.png?v=2" alt="" width="685" height="143" draggable="false" /></span></span>
     <div id="vibe" class="pill hit lab" role="slider" tabindex="0" aria-label="Vibe" aria-orientation="horizontal"><span>Vibe</span><div class="run"><b></b></div></div>
     <span id="np" class="pill"></span>
     <span class="st pill lab"><i></i><span id="st">On air</span></span>
@@ -1554,6 +1591,113 @@ function blobPath(t,amp,rip){
   }
   return d+"Q"+pts[0][0].toFixed(1)+" "+pts[0][1].toFixed(1)+" "+
     ((pts[0][0]+pts[1][0])/2).toFixed(1)+" "+((pts[0][1]+pts[1][1])/2).toFixed(1)+"Z";
+}
+
+/* ================= the foil =================
+   The sticker in the header is holographic foil: brushed, with tiny polygons
+   pressed into it (see the style sheet for how it is laid). Two things about
+   it are done here.
+
+   First, the polygons and the grain of the paper. They are pictures, drawn
+   once on the sticker's own 685 by 143 and handed to the style sheet. The
+   dealing is by a run of numbers that is the same every time, so the foil is
+   the same foil on every visit.
+
+   Second, the tilt. Foil changes with the angle it is held at, and here the
+   pointer does the holding. On the sticker, or within REACH of it, the sheets
+   of colour run across as the pointer moves, each a little in its own way, and
+   the band of light stands where the pointer is; the nearer the pointer, the
+   more of it all. The sticker does not move, only its shine. Away from it the
+   foil goes back to drifting by itself. What the pointer asks for is not put
+   on at once: the shine comes round to it.
+   A finger does none of this (it would have to be dragged across the page),
+   and nor does a listener who has asked for less motion. */
+const foilEl=$(".foil");
+if(foilEl){
+  const SW=685,SH=143,n1=v=>v.toFixed(1);
+  const dealer=seed=>()=>{         // numbers from 0 to 1, the same run every time
+    seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;
+  };
+  const picture=inner=>'url("data:image/svg+xml,'+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 "+SW+" "+SH+
+    "' preserveAspectRatio='none'>"+inner+"</svg>")+'")';
+  /* The polygons: a grid of points, each knocked out of place. Some of its
+     cells are left whole, with four sides, and the rest are cut in two. Each
+     polygon is dealt into one of three lots; the first lot shows the first
+     sheet and needs no picture, and the second and third are drawn white where
+     their polygons are, each to be the mask of its own sheet. */
+  const polygons=(seed,cw,ch)=>{
+    const r=dealer(seed),cols=Math.ceil(SW/cw)+1,rows=Math.ceil(SH/ch)+1,pt=[],lots=["","",""];
+    for(let j=0;j<=rows;j++){pt[j]=[];for(let i=0;i<=cols;i++)pt[j][i]=[(i-.5+(r()-.5)*.9)*cw,(j-.5+(r()-.5)*.9)*ch];}
+    const put=shape=>{lots[Math.floor(r()*3)]+="M"+shape.map(q=>n1(q[0])+" "+n1(q[1])).join("L")+"Z";};
+    for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
+      const a=pt[j][i],b=pt[j][i+1],c=pt[j+1][i+1],d=pt[j+1][i],cut=r();
+      if(cut<.35)put([a,b,c,d]);
+      else(cut<.68?[[a,b,c],[a,c,d]]:[[a,b,d],[b,c,d]]).forEach(put);
+    }
+    return lots.map(d=>picture("<path fill='#fff' d='"+d+"'/>"));
+  };
+  /* The grain: short strips, leaning as the first sheet leans, laid thick over
+     the whole sticker and a little soft at the edges, as the fibres of a
+     brushed sheet are. Each is white or black and mostly clear: it only
+     lightens or darkens what is under it. */
+  const grain=seed=>{
+    const r=dealer(seed),lean=Math.tan(18*Math.PI/180)*SH/2,off=y=>lean*(1-2*y/SH);
+    let strips="";
+    for(let pass=0;pass<3;pass++)for(let x=-lean;x<SW+lean;){
+      const w=.4+r()*r()*2,top=Math.max(0,(r()*1.3-.3)*SH),foot=Math.min(SH,top+(.35+r()*.9)*SH);
+      strips+="<path fill='"+(r()<.55?"#fff":"#000")+"' fill-opacity='"+(r()*.3).toFixed(2)+"' d='M"+n1(x+off(top))+" "+n1(top)+
+        "h"+n1(w)+"L"+n1(x+w+off(foot))+" "+n1(foot)+"h-"+n1(w)+"Z'/>";
+      x+=w*(.6+r());
+    }
+    return picture("<filter id='s' x='-5%' width='110%'><feGaussianBlur stdDeviation='0.8 0'/></filter><g filter='url(#s)'>"+strips+"</g>");
+  };
+  const lots=polygons(31,13,12);
+  foilEl.style.setProperty("--lot2",lots[1]);foilEl.style.setProperty("--lot3",lots[2]);
+  foilEl.style.setProperty("--grain",grain(23));
+  foilEl.classList.add("pressed");
+}
+if(foilEl&&!calm.matches){
+  const REACH=170;                   // how near counts, in pixels
+  const want={x:0,y:0,g:0,n:0},now={x:0,y:0,g:0,n:0};   // across and down (-1 to 1), the light (pixels), how near (0 to 1)
+  let wide=0,going=0;
+  const step=()=>{
+    going=0;
+    let far=0;
+    for(const k in now){
+      const to=k==="g"?want.g:k==="n"?want.n:want[k]*want.n;   // the run falls away with distance
+      now[k]+=(to-now[k])*.16;far=Math.max(far,Math.abs(to-now[k])/(k==="g"?wide||1:1));
+    }
+    const st=foilEl.style,held=now.n>.004||want.n>0;
+    foilEl.classList.toggle("held",held);
+    if(held){
+      /* in hundredths of the sticker's width. Side to side, most of a spectrum goes by; the second and third sheets go a little further or less far */
+      const run=now.x*70+now.y*40;
+      st.setProperty("--t1",run.toFixed(2));
+      st.setProperty("--t2",(run+now.x*12-now.y*9).toFixed(2));
+      st.setProperty("--t3",(run-now.x*9+now.y*12).toFixed(2));
+      st.setProperty("--gx",(now.g/(wide||1)*100).toFixed(2));
+      st.setProperty("--gn",now.n.toFixed(3));
+    }else["--t1","--t2","--t3","--gx","--gn"].forEach(v=>st.removeProperty(v));
+    if(far>.002)going=requestAnimationFrame(step);
+  };
+  const aim=e=>{
+    if(e.pointerType==="touch")return;
+    const r=foilEl.getBoundingClientRect();
+    const dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
+    /* how far outside the sticker the pointer is: nothing while it is on it */
+    const out=Math.hypot(Math.max(0,Math.abs(dx)-r.width/2),Math.max(0,Math.abs(dy)-r.height/2));
+    wide=r.width;
+    want.n=Math.max(0,1-out/REACH);
+    /* the whole run is reached with the pointer a little past the sticker's edge: it is long and low, so more past the top and bottom */
+    want.x=Math.max(-1,Math.min(1,dx/(r.width/2+40)));
+    want.y=Math.max(-1,Math.min(1,dy/(r.height/2+60)));
+    want.g=Math.max(-r.width,Math.min(r.width,dx));
+    if(!going)going=requestAnimationFrame(step);
+  };
+  const letGo=()=>{want.n=0;if(!going)going=requestAnimationFrame(step);};
+  addEventListener("pointermove",aim,{passive:true});
+  document.documentElement.addEventListener("pointerleave",letGo);
+  addEventListener("blur",letGo);
 }
 
 /* ================= frame loop ================= */
