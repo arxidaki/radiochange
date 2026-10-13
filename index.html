@@ -52,14 +52,38 @@
 
   header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;column-gap:10px;
     padding-bottom:calc(var(--pad)*.5);min-height:calc(var(--pad)*.5 + 30px)}
-  /* The name is the station's sticker, a picture. Its height and shape are given
-     here, so the header is the same size before the picture arrives as after,
-     and it reaches a little past the row, above and below. Squeezed, it is drawn
-     smaller. The hard shadow is the one the name had as letters, made here and
-     not in the picture, so it takes the colour of the vibe on show. */
-  .wm{--h:clamp(41px,4.05vw,55px);display:block;flex:none;height:var(--h);width:auto;aspect-ratio:685/143;
-    min-width:0;max-width:100%;object-fit:contain;object-position:left center;margin:calc(var(--h)*-.12) 0;
+  /* The name is the station's sticker, a picture: black paint on a backing cut
+     to its shape. Its height and width are given here, so the header is the
+     same size before the picture arrives as after, and it reaches a little past
+     the row, above and below. Squeezed, it is drawn smaller. The hard shadow is
+     the one the name had as letters, made here and not in the picture, so it
+     takes the colour of the vibe on show. */
+  .wm{--h:clamp(41px,4.05vw,55px);display:flex;align-items:center;flex:none;height:var(--h);width:calc(var(--h)*685/143);
+    min-width:0;max-width:100%;margin:calc(var(--h)*-.12) 0;
     filter:drop-shadow(calc(var(--h)*.055) calc(var(--h)*.055) 0 var(--ink))}
+  .foil{position:relative;width:100%;aspect-ratio:685/143;overflow:hidden}
+  .foil img{position:relative;z-index:1;display:block;width:100%;height:100%}
+  /* The holographic foil edition. The picture is the sticker on white, and here
+     its white becomes foil: behind the picture a pale spectrum, leaning, drifts
+     across without end, and now and then a band of light crosses it. The picture
+     lies over them so that its white takes their colour and its black stays
+     black, and all of it is cut to the sticker's shape. A browser that cannot
+     cut a shape shows the white sticker. */
+  @supports ((-webkit-mask-image:none) or (mask-image:none)){
+    .foil{-webkit-mask:url(radio-change-logo.png?v=2) center/100% 100% no-repeat;mask:url(radio-change-logo.png?v=2) center/100% 100% no-repeat}
+    .foil img{mix-blend-mode:multiply}
+    .foil::before,.foil::after{content:"";position:absolute;top:0;bottom:0;will-change:transform}
+    /* the spectrum, one sticker wide and ending on the colour it began with, laid end to end */
+    .foil::before{left:-120%;right:-120%;transform:skewX(-18deg);
+      background:linear-gradient(90deg,#a3aef0,#95bdf2 10%,#82d2f5 20%,#7de8f9 29%,#95f9f0 38%,#b2fcd3 47%,#d4fac4 55%,#fbeeb2 63%,#fad0a1 72%,#f7b3a8 81%,#f3a6c4 90%,#d2a8ee 96%,#a3aef0) 0 0/calc(100%/3.4) 100% repeat-x;
+      animation:foil 16s linear infinite}
+    .foil::after{left:-60%;right:-60%;
+      background:linear-gradient(105deg,transparent 43%,rgba(255,255,255,.45) 49%,rgba(255,255,255,.15) 53%,transparent 59%);
+      animation:glint 9s ease-in-out infinite}
+  }
+  @keyframes foil{from{transform:translateX(0) skewX(-18deg)}to{transform:translateX(calc(100%/3.4)) skewX(-18deg)}}
+  @keyframes glint{0%{transform:translateX(-75%)}55%,100%{transform:translateX(75%)}}
+  @media (prefers-reduced-motion:reduce){.foil::before,.foil::after{animation:none}}
   .st{display:flex;align-items:center;gap:.7em;padding:.75em 1.1em}
   .st i{width:.9em;height:.9em;border-radius:50%;background:var(--cream);opacity:.4}
   [data-air=on] .st i{background:var(--live);opacity:1}
@@ -305,7 +329,7 @@
   <div id="cols" aria-label="Equaliser"></div>
 
   <header>
-    <img class="wm" src="radio-change-logo.png?v=2" alt="Radio Change" width="685" height="143" draggable="false" />
+    <span class="wm" role="img" aria-label="Radio Change"><span class="foil"><img src="radio-change-logo.png?v=2" alt="" width="685" height="143" draggable="false" /></span></span>
     <div id="vibe" class="pill hit lab" role="slider" tabindex="0" aria-label="Vibe" aria-orientation="horizontal"><span>Vibe</span><div class="run"><b></b></div></div>
     <span id="np" class="pill"></span>
     <span class="st pill lab"><i></i><span id="st">On air</span></span>
