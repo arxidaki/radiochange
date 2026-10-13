@@ -1559,15 +1559,20 @@ function frame(now){
   bass+=(s.bass-bass)*.25;treb+=(s.treble-treb)*.3;
   T+=dt*(.035+onAmt*(.03+s.level*.3));
 
+  /* Every column shows what is going out, not what came in: the fader raises
+     and lowers them all, and at nothing (which is mute) they lie flat. The
+     ear's way, not the ruler's: by halfway up the fader they stand all but as
+     tall as they can, and most of the fall comes in the bottom third. */
+  const loud=1-Math.pow(1-radio.volume,4);
   for(let i=0;i<NB;i++){
     let tgt=1,k=dt*4;                                      // no signal: every column fully lit
-    if(s.on){tgt=Math.max(.02,Math.min(1,s.bands[i]*1.22));k=dt*(tgt>levels[i]?36:13);}
+    if(s.on){tgt=Math.max(.02,Math.min(1,s.bands[i]*1.22))*loud;k=dt*(tgt>levels[i]?36:13);}
     levels[i]+=(tgt-levels[i])*Math.min(1,k);
   }
-  /* the volume's own column: what is going out, so it answers to the fader and to mute */
+  /* the volume's own column: the level of the whole sound */
   {
     let tgt=1,k=dt*4;
-    if(s.on){tgt=radio.muted?0:Math.min(1,s.level*1.7)*Math.pow(radio.volume,.7);k=dt*(tgt>out?30:9);}
+    if(s.on){tgt=Math.min(1,s.level*1.7)*loud;k=dt*(tgt>out?30:9);}
     out+=(tgt-out)*Math.min(1,k);
   }
   if(prog){
