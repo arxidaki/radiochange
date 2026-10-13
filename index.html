@@ -52,8 +52,14 @@
 
   header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;column-gap:10px;
     padding-bottom:calc(var(--pad)*.5);min-height:calc(var(--pad)*.5 + 30px)}
-  .wm{font-weight:900;font-stretch:125%;font-size:clamp(15px,1.5vw,22px);letter-spacing:.08em;text-transform:uppercase;
-    text-shadow:.07em .07em 0 var(--ink)}
+  /* The name is the station's sticker, a picture. Its height and shape are given
+     here, so the header is the same size before the picture arrives as after,
+     and it reaches a little past the row, above and below. Squeezed, it is drawn
+     smaller. The hard shadow is the one the name had as letters, made here and
+     not in the picture, so it takes the colour of the vibe on show. */
+  .wm{--h:clamp(44px,4.4vw,60px);display:block;flex:none;height:var(--h);width:auto;aspect-ratio:685/155;
+    min-width:0;max-width:100%;object-fit:contain;object-position:left center;margin:calc(var(--h)*-.12) 0;
+    filter:drop-shadow(calc(var(--h)*.055) calc(var(--h)*.055) 0 var(--ink))}
   .st{display:flex;align-items:center;gap:.7em;padding:.75em 1.1em}
   .st i{width:.9em;height:.9em;border-radius:50%;background:var(--cream);opacity:.4}
   [data-air=on] .st i{background:var(--live);opacity:1}
@@ -271,10 +277,8 @@
        row whatever the light says. When the two could wrap, they did on a narrow
        phone, or one set to large type, for the second the light says
        "Connecting": the header grew, the song under it was set smaller, and then
-       back again. Should the two ever not fit, the light lies over the end of
-       the name. */
+       back again. Should the two ever not fit, the name is drawn smaller. */
     header{display:grid;grid-template-columns:minmax(0,1fr) auto;padding-bottom:0;row-gap:8px}
-    .wm{white-space:nowrap}
     .st{grid-area:1/2}
     /* no room beside the name here: the vibe takes a row of its own under it */
     #vibe{grid-area:2/1/auto/-1;margin:0;padding:8px 10px 8px 1.4em}
@@ -301,7 +305,7 @@
   <div id="cols" aria-label="Equaliser"></div>
 
   <header>
-    <b class="wm">Radio Change</b>
+    <img class="wm" src="radio-change-logo.png" alt="Radio Change" width="685" height="155" draggable="false" />
     <div id="vibe" class="pill hit lab" role="slider" tabindex="0" aria-label="Vibe" aria-orientation="horizontal"><span>Vibe</span><div class="run"><b></b></div></div>
     <span id="np" class="pill"></span>
     <span class="st pill lab"><i></i><span id="st">On air</span></span>
