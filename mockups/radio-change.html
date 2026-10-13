@@ -267,9 +267,17 @@
   @media (max-width:760px){
     :root{--volw:40px;--gl:0px;--gr:var(--gut);--volx:calc(var(--pad)/2 - var(--gap)/4)}
     body{grid-template-columns:minmax(0,1fr) var(--volw);grid-template-rows:auto minmax(0,1fr) auto auto;row-gap:12px}
-    header{padding-bottom:0;flex-wrap:wrap;row-gap:8px}
+    /* The name and the light share a row, and it is a grid, so that it stays one
+       row whatever the light says. When the two could wrap, they did on a narrow
+       phone, or one set to large type, for the second the light says
+       "Connecting": the header grew, the song under it was set smaller, and then
+       back again. Should the two ever not fit, the light lies over the end of
+       the name. */
+    header{display:grid;grid-template-columns:minmax(0,1fr) auto;padding-bottom:0;row-gap:8px}
+    .wm{white-space:nowrap}
+    .st{grid-area:1/2}
     /* no room beside the name here: the vibe takes a row of its own under it */
-    #vibe{order:3;flex:1 0 100%;margin:0;padding:8px 10px 8px 1.4em}
+    #vibe{grid-area:2/1/auto/-1;margin:0;padding:8px 10px 8px 1.4em}
     #vibe .run{flex:1;width:auto}
     #block{grid-column:1}
     #side{grid-column:1;grid-row:3;display:grid;grid-template-columns:108px minmax(0,1fr);gap:10px;align-items:start}
@@ -349,7 +357,7 @@
   <div id="measure" aria-hidden="true"></div>
   <div id="err" role="alert"></div>
 
-<script src="engine.js?v=20"></script>
+<script src="engine.js?v=21"></script>
 <script>
 /* =====================================================================
    RADIO CHANGE
