@@ -6,6 +6,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "5173", "--directory", "mockups"],
       "port": 5173
+    },
+    {
+      "name": "mockups-2",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5174", "--directory", "mockups"],
+      "port": 5174
+    },
+    {
+      "name": "mockups-3",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5175", "--directory", "mockups"],
+      "port": 5175
     }
   ]
 }
