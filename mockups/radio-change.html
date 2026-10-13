@@ -201,10 +201,15 @@
   .hint{display:none;padding:.7em 1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
     font-family:var(--mono);font-weight:600;font-stretch:87.5%;font-size:11px;letter-spacing:0;text-transform:none}
   body.desk .hint{display:block}
-  /* shown only while the browser is holding the sound back; sits beside the mute button */
-  #cue{display:none;order:-1;flex:none;background:var(--cream);color:var(--ink);padding:1em 1.4em;
-    font-size:12px;letter-spacing:.12em;white-space:nowrap}
+  /* Shown only while the browser is holding the sound back. It stands where the
+     presets are, beside the mute button, and they wait behind it: they shape a
+     sound that is not on yet. It takes no room of its own. When it did, the
+     presets made way for it, the song above was set for a shorter page until
+     the first touch, and set again the moment the cue went. */
+  #cue{display:none;position:absolute;left:0;top:50%;transform:translateY(-50%);background:var(--cream);color:var(--ink);
+    padding:1em 1.4em;font-size:12px;letter-spacing:.12em;white-space:nowrap}
   [data-air=blocked] #cue{display:block}
+  [data-air=blocked] #presets{visibility:hidden}
 
   /* ---------- the equaliser: the ten columns of the field are the sliders ---------- */
   #cols{position:absolute;z-index:3;top:0;bottom:0;left:var(--gl);right:var(--gr);
@@ -276,7 +281,7 @@
     #presets{gap:5px}
     #presets button{padding:.9em .8em;letter-spacing:.05em}
     .hint{display:none!important}
-    #cue{flex:1 0 100%;text-align:center}
+    #cue{right:0;text-align:center}
     .tag{font-size:9px;padding:2px 3px}
     .hz{bottom:auto;top:calc(var(--pad) + 84px)}       /* up top here: a deep cut would land on them below */
     #np{display:none!important}
